@@ -22,8 +22,17 @@
 
 	$effect(() => {
 		fetchMarkets();
-		const timer = setInterval(fetchMarkets, 10_000);
-		return () => clearInterval(timer);
+		const timer = setInterval(fetchMarkets, 5_000);
+
+		function onVisible() {
+			if (document.visibilityState === 'visible') fetchMarkets();
+		}
+		document.addEventListener('visibilitychange', onVisible);
+
+		return () => {
+			clearInterval(timer);
+			document.removeEventListener('visibilitychange', onVisible);
+		};
 	});
 
 	function canJoin(market: MarketListItem): boolean {

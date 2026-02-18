@@ -2,6 +2,11 @@
  * @module countdown
  * Svelte 5 rune-based countdown timer factory for the auto-advance clock.
  * Uses `setInterval` polling (every 200ms) since this runs in a `.svelte.ts` module.
+ *
+ * Uses a snapshot-based local countdown to avoid clock skew between server and client.
+ * Server sends absolute `advance_time` (epoch ms from its own clock). Instead of comparing
+ * that directly against client's `Date.now()` on every tick (which drifts with clock skew),
+ * we snapshot once when `advance_time` changes and count down using purely client-local time.
  */
 
 import { game } from '$lib/stores/gameStore.svelte.js';
@@ -15,13 +20,37 @@ export function createCountdown() {
 	let active = $state(false);
 	let intervalId: ReturnType<typeof setInterval> | null = null;
 
+	/** Last `advance_time` value we've snapshotted — used to detect period advances and toggle changes. */
+	let trackedAdvanceTime = 0;
+	/** Client-local epoch ms when the countdown should reach zero. */
+	let countdownEndClient = 0;
+
 	function tick() {
-		remainingMs = Math.max(0, game.state.advance_time - Date.now());
+		const totalMs = (game.state.options?.auto_advance_time ?? 30) * 1000;
+
+		// Detect when server sends a new advance_time (period advance or auto-advance toggle)
+		if (game.state.advance_time !== trackedAdvanceTime) {
+			trackedAdvanceTime = game.state.advance_time;
+			const serverRemaining = game.state.advance_time - Date.now();
+			const clamped = Math.max(0, Math.min(serverRemaining, totalMs));
+
+			// Fresh period: server says ~full duration remaining → start at exactly full
+			if (clamped >= totalMs * 0.95) {
+				countdownEndClient = Date.now() + totalMs;
+			} else {
+				// Mid-period reconnection or re-enabled auto-advance: use server estimate
+				countdownEndClient = Date.now() + clamped;
+			}
+		}
+
+		remainingMs = Math.max(0, countdownEndClient - Date.now());
 	}
 
 	function start() {
 		stop();
 		active = true;
+		// Reset so the first tick() takes a fresh snapshot
+		trackedAdvanceTime = 0;
 		tick();
 		intervalId = setInterval(tick, 200);
 	}

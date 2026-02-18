@@ -31,8 +31,17 @@
 		const _trigger = refreshKey; // re-run when parent signals a mutation
 		if (connection.adminKey) {
 			fetchMarkets();
-			const timer = setInterval(fetchMarkets, 30_000);
-			return () => clearInterval(timer);
+			const timer = setInterval(fetchMarkets, 15_000);
+
+			function onVisible() {
+				if (document.visibilityState === 'visible') fetchMarkets();
+			}
+			document.addEventListener('visibilitychange', onVisible);
+
+			return () => {
+				clearInterval(timer);
+				document.removeEventListener('visibilitychange', onVisible);
+			};
 		}
 	});
 
