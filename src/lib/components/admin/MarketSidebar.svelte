@@ -10,11 +10,13 @@
 	let {
 		selectedMarket = $bindable(),
 		onrequestcreate,
-		refreshKey = 0
+		refreshKey = 0,
+		excludeMarkets = [] as string[]
 	}: {
 		selectedMarket: string | null;
 		onrequestcreate: () => void;
 		refreshKey?: number;
+		excludeMarkets?: string[];
 	} = $props();
 
 	let marketsStore = $state<MarketListItem[]>([]);
@@ -69,6 +71,7 @@
 	}
 
 	const allMarkets = $derived.by(() => {
+		const excluded = new Set(excludeMarkets);
 		const liveEntry = selectedMarket && connection.connected ? {
 			name: selectedMarket,
 			state: game.state.state,
@@ -78,12 +81,14 @@
 			updatedAt: Date.now()
 		} : null;
 
-		const result = marketsStore.map(m =>
-			liveEntry && m.name === selectedMarket ? { ...m, ...liveEntry } : m
-		);
+		const result = marketsStore
+			.filter(m => !excluded.has(m.name))
+			.map(m =>
+				liveEntry && m.name === selectedMarket ? { ...m, ...liveEntry } : m
+			);
 
 		// If selected market isn't in the polled list yet, prepend it
-		if (selectedMarket && !marketsStore.some(m => m.name === selectedMarket)) {
+		if (selectedMarket && !excluded.has(selectedMarket) && !marketsStore.some(m => m.name === selectedMarket)) {
 			result.unshift(liveEntry ?? {
 				name: selectedMarket,
 				state: 'connecting',
