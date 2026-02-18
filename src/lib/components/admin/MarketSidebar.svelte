@@ -2,7 +2,6 @@
 	import { connection } from '$lib/stores/connectionStore.svelte.js';
 	import { game } from '$lib/stores/gameStore.svelte.js';
 	import { connect, softDisconnect } from '$lib/services/websocket.js';
-	import { listMarkets } from '../../../routes/markets.remote';
 	import { updateMarketSettings } from '../../../routes/admin.remote';
 	import { stateBadge, stateAbbr } from '$lib/utils/stateLabels.js';
 	import type { MarketListItem } from '$lib/types/messages.js';
@@ -10,20 +9,22 @@
 	let {
 		selectedMarket = $bindable(),
 		onrequestcreate,
-		refreshKey = 0,
-		excludeMarkets = [] as string[]
+		refreshKey = 0
 	}: {
 		selectedMarket: string | null;
 		onrequestcreate: () => void;
 		refreshKey?: number;
-		excludeMarkets?: string[];
 	} = $props();
 
 	let marketsStore = $state<MarketListItem[]>([]);
 
+	/** Direct fetch bypasses SvelteKit query cache so polling always gets fresh data. */
 	async function fetchMarkets() {
 		try {
-			marketsStore = await listMarkets(connection.adminKey ?? undefined);
+			const params = new URLSearchParams();
+			if (connection.adminKey) params.set('key', connection.adminKey);
+			const res = await fetch(`/api/markets?${params}`);
+			if (res.ok) marketsStore = await res.json();
 		} catch {
 			// ignore fetch errors
 		}
@@ -71,7 +72,6 @@
 	}
 
 	const allMarkets = $derived.by(() => {
-		const excluded = new Set(excludeMarkets);
 		const liveEntry = selectedMarket && connection.connected ? {
 			name: selectedMarket,
 			state: game.state.state,
@@ -81,14 +81,12 @@
 			updatedAt: Date.now()
 		} : null;
 
-		const result = marketsStore
-			.filter(m => !excluded.has(m.name))
-			.map(m =>
-				liveEntry && m.name === selectedMarket ? { ...m, ...liveEntry } : m
-			);
+		const result = marketsStore.map(m =>
+			liveEntry && m.name === selectedMarket ? { ...m, ...liveEntry } : m
+		);
 
 		// If selected market isn't in the polled list yet, prepend it
-		if (selectedMarket && !excluded.has(selectedMarket) && !marketsStore.some(m => m.name === selectedMarket)) {
+		if (selectedMarket && !marketsStore.some(m => m.name === selectedMarket)) {
 			result.unshift(liveEntry ?? {
 				name: selectedMarket,
 				state: 'connecting',

@@ -25,7 +25,6 @@
 	let showCreateModal = $state(false);
 	let pendingConfig: GameOptions | null = $state(null);
 	let sidebarRefreshKey = $state(0);
-	let deletedMarkets = $state<string[]>([]);
 
 	// Paired setup/teardown: co-located via $effect cleanup
 	$effect(() => {
@@ -72,8 +71,6 @@
 				selectedMarket = null;
 			}
 			await destroyMarket({ name, key: connection.adminKey });
-			// Optimistically hide from sidebar; next poll confirms removal.
-			deletedMarkets = [...deletedMarkets, name];
 			sidebarRefreshKey++;
 		} catch (err) {
 			console.warn('Failed to remove market:', err);
@@ -85,8 +82,6 @@
 		pendingConfig = config;
 		showCreateModal = false;
 		if (connection.connected) softDisconnect();
-		// Clear from deleted list so a re-created market isn't filtered out.
-		deletedMarkets = deletedMarkets.filter(n => n !== name);
 		selectedMarket = name;
 		connection.marketName = name;
 		connect(name, 'admin', 'admin', connection.adminKey);
@@ -111,7 +106,6 @@
 				bind:selectedMarket
 				onrequestcreate={() => { showCreateModal = true; }}
 				refreshKey={sidebarRefreshKey}
-				excludeMarkets={deletedMarkets}
 			/>
 			<button
 				class="w-full py-2 px-4 border-[1.5px] border-border-light rounded bg-white text-text-muted font-body text-xs font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all duration-200 ease-brand shrink-0 hover:border-maroon hover:text-maroon hover:bg-maroon-faint"
