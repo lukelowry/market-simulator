@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { listMarkets } from '../../routes/markets.remote';
 	import { stateLabel, stateBadge } from '$lib/utils/stateLabels.js';
 	import type { MarketListItem } from '$lib/types/messages.js';
 
@@ -11,8 +10,13 @@
 
 	async function fetchMarkets() {
 		try {
-			marketsData = await listMarkets(undefined);
-			fetchError = null;
+			const res = await fetch('/api/markets');
+			if (res.ok) {
+				marketsData = await res.json();
+				fetchError = null;
+			} else {
+				fetchError = 'Failed to load markets. Retrying...';
+			}
 			loading = false;
 		} catch {
 			fetchError = 'Failed to load markets. Retrying...';

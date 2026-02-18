@@ -153,6 +153,7 @@ export function connect(market: string, role: string, name: string, key?: string
 	saveSession(session);
 	clearTimers();
 	closeWebSocket();
+	connection.connectionError = null;
 
 	const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 	const params = new URLSearchParams({ market, role, name });
@@ -280,6 +281,7 @@ export function disconnect(clearStoredSession = false): void {
 	closeWebSocket();
 	reconnectAttempt = 0;
 	hasConnectedOnce = false;
+	sessionEstablishedOnce = false;
 	connection.reset();
 	game.reset();
 	if (clearStoredSession) clearSession();

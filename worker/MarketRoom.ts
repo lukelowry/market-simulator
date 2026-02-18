@@ -128,9 +128,9 @@ export class MarketRoom extends DurableObject<Env> {
 			const changed = await this.handleMessage(tags[0], tags[1], msg);
 			if (changed) {
 				// submitOffers only affects the submitter's own gens (filtered by visibility)
-				// so skip broadcasting to other participants — admin gets the update, full sync on advancePeriod
-				const adminOnly = msg.type === 'submitOffers';
-				await this.persistAndBroadcast(adminOnly ? { adminOnly: true } : undefined);
+				// so skip broadcasting to other participants — admin + submitter get the update, full sync on advancePeriod
+				const submitOnly = msg.type === 'submitOffers' ? ws : undefined;
+				await this.persistAndBroadcast(submitOnly ? { submitterOnly: submitOnly } : undefined);
 			} else if (msg.type !== 'submitOffers') {
 				// Notify the sender that the operation was rejected (wrong state, role, etc.)
 				try { ws.send(JSON.stringify({ type: 'error', payload: { message: `Action '${msg.type}' not allowed in current state.` } })); } catch { /* send failed */ }
@@ -170,7 +170,7 @@ export class MarketRoom extends DurableObject<Env> {
 			// Check if this is a cleanup alarm for a completed game
 			const cleanupAt = await this.ctx.storage.get<number>('cleanupAt');
 			if (cleanupAt && Date.now() >= cleanupAt - 1000) {
-				if (this.game.state === 'completed' && this.ctx.getWebSockets().length === 0) {
+				if (this.game.state !== 'running' && this.ctx.getWebSockets().length === 0) {
 					// No one connected — remove from registry and delete all storage
 					await removeFromRegistry(this.env.MARKET_REGISTRY, this.marketName);
 					await this.ctx.storage.deleteAll();
@@ -633,7 +633,7 @@ export class MarketRoom extends DurableObject<Env> {
 	 * Registry is only updated when the snapshot string changes (avoids redundant DO-to-DO RPC).
 	 * WS sends are fire-and-forget; failed sends close the socket.
 	 */
-	private async persistAndBroadcast(options?: { adminOnly?: boolean }): Promise<void> {
+	private async persistAndBroadcast(options?: { submitterOnly?: WebSocket }): Promise<void> {
 		const { periods: _periods, ...meta } = this.game;
 		const batch: Record<string, unknown> = { game: meta };
 		if (this.kickedPlayersDirty) {
@@ -655,7 +655,7 @@ export class MarketRoom extends DurableObject<Env> {
 		for (const ws of this.ctx.getWebSockets()) {
 			try {
 				const tags = this.ctx.getTags(ws);
-				if (options?.adminOnly && tags[0] !== 'admin') continue;
+				if (options?.submitterOnly && tags[0] !== 'admin' && ws !== options.submitterOnly) continue;
 				ws.send(JSON.stringify({
 					type: 'gameState',
 					payload: getVisibleState({

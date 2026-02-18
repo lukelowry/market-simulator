@@ -55,7 +55,7 @@
 		}
 	});
 
-	const showGame = $derived(connection.connected && game.state.state !== 'uninitialized');
+	const showGame = $derived((connection.connected || connection.reconnecting) && game.state.state !== 'uninitialized');
 	const showConnectionStatus = $derived(isJoining && !showGame && !connection.connectionError);
 	const showDisconnectError = $derived(!connection.connected && !connection.reconnecting && connection.connectionError !== null);
 	const showGameData = $derived(game.isActive);

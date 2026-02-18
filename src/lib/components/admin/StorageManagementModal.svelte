@@ -7,7 +7,13 @@
 	import { connection } from '$lib/stores/connectionStore.svelte.js';
 	import { destroyMarket as destroyMarketRemote, purgeMarkets, getMarketInfo, getBulkMarketInfo } from '../../../routes/admin.remote';
 
-	let { isOpen = $bindable() }: { isOpen: boolean } = $props();
+	let {
+		isOpen = $bindable(),
+		onbeforedestroy
+	}: {
+		isOpen: boolean;
+		onbeforedestroy?: (name: string) => void;
+	} = $props();
 
 	let marketInfos: MarketStorageInfo[] = $state([]);
 	let loading = $state(false);
@@ -53,6 +59,7 @@
 	async function handleDestroyMarket(name: string) {
 		destroyingMarket = name;
 		try {
+			onbeforedestroy?.(name);
 			await destroyMarketRemote({ name, key: connection.adminKey ?? '' });
 			marketInfos = marketInfos.filter(m => m.name !== name);
 		} catch {
@@ -65,6 +72,8 @@
 		purging = true;
 		showPurgeConfirm = false;
 		try {
+			// Notify parent to disconnect from any connected market before purge
+			for (const m of marketInfos) onbeforedestroy?.(m.name);
 			await purgeMarkets({ key: connection.adminKey ?? '', destroyStorage: true });
 			marketInfos = [];
 		} catch {

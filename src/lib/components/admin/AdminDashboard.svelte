@@ -215,5 +215,14 @@
 {/if}
 
 {#if showStorageModal}
-	<StorageManagementModal bind:isOpen={showStorageModal} />
+	<StorageManagementModal
+		bind:isOpen={showStorageModal}
+		onbeforedestroy={(name) => {
+			if (selectedMarket === name && connection.connected) {
+				softDisconnect();
+				selectedMarket = null;
+				sidebarRefreshKey++;
+			}
+		}}
+	/>
 {/if}
