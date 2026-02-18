@@ -54,9 +54,10 @@ export function generateCsvFromData(data: CsvData, isAdmin: boolean, participant
 }
 
 /** Fetch full game data from `/api/csv-data`. The `role` param controls server-side filtering, not just display. */
-export async function fetchCsvData(market: string, role: string, name: string, key?: string): Promise<CsvData> {
+export async function fetchCsvData(market: string, role: string, name: string, key?: string, token?: string): Promise<CsvData> {
 	const params = new URLSearchParams({ market, role, name });
 	if (key) params.set('key', key);
+	if (token) params.set('token', token);
 	const res = await fetch(`/api/csv-data?${params.toString()}`);
 	if (!res.ok) throw new Error(`Failed to fetch CSV data: ${res.status}`);
 	return res.json();

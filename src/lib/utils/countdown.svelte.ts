@@ -46,7 +46,7 @@ export function createCountdown() {
 			return totalMs > 0 ? (remainingMs / totalMs) * 100 : 100;
 		},
 		get text() {
-			return active ? `${this.seconds}s` : 'paused';
+			return active ? `${this.seconds}s` : '';
 		},
 		get active() {
 			return active;

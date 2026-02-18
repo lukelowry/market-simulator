@@ -25,7 +25,7 @@
 
 import { DurableObject } from 'cloudflare:workers';
 import { isAdmin, verifyPlayerToken } from './auth';
-import { WS_CLOSE_REPLACED, WS_CLOSE_KICKED, WS_CLOSE_RESET } from './constants';
+import { WS_CLOSE_REPLACED, WS_CLOSE_KICKED, WS_CLOSE_RESET, WS_CLOSE_DELETED } from './constants';
 import type { Env } from './env';
 import {
 	joinGame, updateOptions, setVisibility, submitOffers, rewardPlayer, kickPlayer,
@@ -43,7 +43,7 @@ import { getVisibleState, stripPlayerInternals } from './visibility';
  * @see module doc at top of file for storage layout and hibernation rules.
  */
 export class MarketRoom extends DurableObject<Env> {
-	private static readonly CLEANUP_DELAY_MS = 24 * 60 * 60 * 1000; // 24 hours
+	private static readonly CLEANUP_DELAY_MS = 48 * 60 * 60 * 1000; // 48 hours
 
 	private game: GameState = defaultGameState();
 	private marketName: string = '';
@@ -67,28 +67,38 @@ export class MarketRoom extends DurableObject<Env> {
 		);
 
 		this.ctx.blockConcurrencyWhile(async () => {
-			const [stored, name, kicked, snap] = await Promise.all([
-				this.ctx.storage.get<GameState>('game'),
-				this.ctx.storage.get<string>('marketName'),
-				this.ctx.storage.get<string[]>('kickedPlayers'),
-				this.ctx.storage.get<string>('registrySnapshot')
-			]);
+			try {
+				const [stored, name, kicked, snap] = await Promise.all([
+					this.ctx.storage.get<GameState>('game'),
+					this.ctx.storage.get<string>('marketName'),
+					this.ctx.storage.get<string[]>('kickedPlayers'),
+					this.ctx.storage.get<string>('registrySnapshot')
+				]);
 
-			if (stored) {
-				this.game = stored;
-				// Defensive defaults for fields that may be missing in older stored state
-				this.game.visibility = this.game.visibility ?? 'public';
-				this.game.players = this.game.players ?? {};
-				this.game.gens = this.game.gens ?? {};
-				this.game.nplayers = Object.keys(this.game.players).length;
+				if (stored && typeof stored === 'object') {
+					this.game = stored;
+					// Defensive defaults for fields that may be missing in older stored state
+					this.game.state = this.game.state ?? 'uninitialized';
+					this.game.visibility = this.game.visibility ?? 'public';
+					this.game.players = this.game.players ?? {};
+					this.game.gens = this.game.gens ?? {};
+					this.game.nplayers = Object.keys(this.game.players).length;
+					this.game.period = this.game.period ?? 0;
+					this.game.auto_advance = this.game.auto_advance ?? false;
+					this.game.advance_time = this.game.advance_time ?? 0;
+					this.game.last_advance_time = this.game.last_advance_time ?? 0;
+				}
+				// Periods are NOT loaded into memory — stored per-key and loaded on-demand.
+				// this.game.periods stays [] in memory. See loadPeriodsFromStorage().
+				this.game.periods = [];
+
+				if (name) this.marketName = name;
+				if (kicked) this.kickedPlayers = new Set(kicked);
+				if (snap) this.lastRegistrySnapshot = snap;
+			} catch (err) {
+				console.error('MarketRoom constructor: failed to load from storage, using defaults', err);
+				this.game = defaultGameState();
 			}
-			// Periods are NOT loaded into memory — stored per-key and loaded on-demand.
-			// this.game.periods stays [] in memory. See loadPeriodsFromStorage().
-			this.game.periods = [];
-
-			if (name) this.marketName = name;
-			if (kicked) this.kickedPlayers = new Set(kicked);
-			if (snap) this.lastRegistrySnapshot = snap;
 		});
 	}
 
@@ -116,7 +126,15 @@ export class MarketRoom extends DurableObject<Env> {
 		try {
 			const tags = this.ctx.getTags(ws);
 			const changed = await this.handleMessage(tags[0], tags[1], msg);
-			if (changed) await this.persistAndBroadcast();
+			if (changed) {
+				// submitOffers only affects the submitter's own gens (filtered by visibility)
+				// so skip broadcasting to other participants — admin gets the update, full sync on advancePeriod
+				const adminOnly = msg.type === 'submitOffers';
+				await this.persistAndBroadcast(adminOnly ? { adminOnly: true } : undefined);
+			} else if (msg.type !== 'submitOffers') {
+				// Notify the sender that the operation was rejected (wrong state, role, etc.)
+				try { ws.send(JSON.stringify({ type: 'error', payload: { message: `Action '${msg.type}' not allowed in current state.` } })); } catch { /* send failed */ }
+			}
 		} catch (err) {
 			console.error('Error handling WebSocket message:', err);
 			try { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Server error processing your request.' } })); } catch { /* send failed */ }
@@ -127,6 +145,14 @@ export class MarketRoom extends DurableObject<Env> {
 		// Reciprocal close required by CF hibernation API to avoid 1006 abnormal close errors
 		try { ws.close(code, reason); } catch { /* already closed */ }
 		this.broadcastConnectedClientsToAdmins();
+
+		// Schedule inactivity cleanup when last client disconnects from a non-running game.
+		// Running games may have auto-advance alarms; completed games already schedule cleanup.
+		if (this.ctx.getWebSockets().length === 0
+			&& this.game.state !== 'running'
+			&& this.game.state !== 'completed') {
+			await this.scheduleCleanupAlarm();
+		}
 	}
 
 	async webSocketError(ws: WebSocket, _error: unknown): Promise<void> {
@@ -136,7 +162,7 @@ export class MarketRoom extends DurableObject<Env> {
 	/**
 	 * Dual-purpose alarm handler:
 	 * 1. Auto-advance: fires when `auto_advance` is enabled and the period timer expires.
-	 * 2. Deferred cleanup: fires 24h after game completion to delete storage if no one is connected.
+	 * 2. Deferred cleanup: fires 48h after game completion to delete storage if no one is connected.
 	 *    Uses `cleanupAt - 1000` comparison to account for Cloudflare alarm jitter (~1s).
 	 */
 	async alarm(): Promise<void> {
@@ -152,7 +178,7 @@ export class MarketRoom extends DurableObject<Env> {
 				}
 				// Someone is still connected — reschedule
 				if (this.ctx.getWebSockets().length > 0) {
-					this.scheduleCleanupAlarm();
+					await this.scheduleCleanupAlarm();
 					return;
 				}
 				// Cleanup alarm fired but game not completed — ignore
@@ -161,7 +187,7 @@ export class MarketRoom extends DurableObject<Env> {
 
 			// Normal auto-advance alarm
 			if (this.game.state === 'running' && this.game.auto_advance) {
-				this.handleAdvancePeriod();
+				await this.handleAdvancePeriod();
 				await this.persistAndBroadcast();
 			}
 		} catch (err) {
@@ -169,10 +195,10 @@ export class MarketRoom extends DurableObject<Env> {
 		}
 	}
 
-	private scheduleCleanupAlarm(): void {
+	private async scheduleCleanupAlarm(): Promise<void> {
 		const cleanupTime = Date.now() + MarketRoom.CLEANUP_DELAY_MS;
-		this.ctx.storage.put('cleanupAt', cleanupTime);
-		this.ctx.storage.setAlarm(cleanupTime);
+		await this.ctx.storage.put('cleanupAt', cleanupTime);
+		await this.ctx.storage.setAlarm(cleanupTime);
 	}
 
 	// --- REST Endpoints ---
@@ -190,11 +216,11 @@ export class MarketRoom extends DurableObject<Env> {
 			if (!(await this.isAuthorized(url))) return new Response('Unauthorized', { status: 401 });
 			// Close all connected WebSockets
 			for (const ws of this.ctx.getWebSockets()) {
-				try { ws.close(1001, 'Market deleted'); } catch { /* already closed */ }
+				try { ws.close(WS_CLOSE_DELETED, 'Market deleted'); } catch { /* already closed */ }
 			}
 			// Remove from registry and reset state
 			this.game = defaultGameState();
-			this.ctx.storage.deleteAlarm();
+			await this.ctx.storage.deleteAlarm();
 			await removeFromRegistry(this.env.MARKET_REGISTRY, this.marketName);
 			// Delete all storage for this DO
 			await this.ctx.storage.deleteAll();
@@ -204,22 +230,38 @@ export class MarketRoom extends DurableObject<Env> {
 		if (url.pathname === '/info' && request.method === 'GET') {
 			if (!(await this.isAuthorized(url))) return new Response('Unauthorized', { status: 401 });
 
-			const { periods: _p, ...meta } = this.game;
-			const gameBytes = new TextEncoder().encode(JSON.stringify(meta)).length;
-			// Count period storage keys instead of loading all period data
-			const periodKeys = await this.ctx.storage.list({ prefix: 'period:' });
+			try {
+				const { periods: _p, ...meta } = this.game;
+				const gameBytes = new TextEncoder().encode(JSON.stringify(meta)).length;
+				// Count period storage keys instead of loading all period data
+				const periodKeys = await this.ctx.storage.list({ prefix: 'period:' });
 
-			return Response.json({
-				exists: this.game.state !== 'uninitialized',
-				marketName: this.marketName || null,
-				state: this.game.state,
-				playerCount: Object.keys(this.game.players).length,
-				periodCount: periodKeys.size || this.game.period,
-				currentPeriod: this.game.period,
-				estimatedStorageBytes: gameBytes,
-				hasAlarm: (await this.ctx.storage.getAlarm()) !== null,
-				connectedWebSockets: this.ctx.getWebSockets().length
-			});
+				return Response.json({
+					exists: this.game.state !== 'uninitialized',
+					marketName: this.marketName || null,
+					state: this.game.state,
+					playerCount: Object.keys(this.game.players).length,
+					periodCount: periodKeys.size || this.game.period,
+					currentPeriod: this.game.period,
+					estimatedStorageBytes: gameBytes,
+					hasAlarm: (await this.ctx.storage.getAlarm()) !== null,
+					connectedWebSockets: this.ctx.getWebSockets().length
+				});
+			} catch (err) {
+				console.error('MarketRoom /info error:', err);
+				return Response.json({
+					exists: false,
+					marketName: this.marketName || null,
+					state: this.game.state ?? 'unknown',
+					playerCount: 0,
+					periodCount: 0,
+					currentPeriod: 0,
+					estimatedStorageBytes: 0,
+					hasAlarm: false,
+					connectedWebSockets: 0,
+					error: 'Internal error reading DO state'
+				}, { status: 200 }); // 200 so caller can still display partial info
+			}
 		}
 
 		if (url.pathname === '/settings' && request.method === 'POST') {
@@ -242,6 +284,13 @@ export class MarketRoom extends DurableObject<Env> {
 
 			if (role === 'admin' && !(await this.isAuthorized(url))) {
 				return new Response('Unauthorized', { status: 401 });
+			}
+			if (role === 'participant') {
+				const token = url.searchParams.get('token');
+				const verified = await verifyPlayerToken(token, this.env.ADMIN_PASSWORD);
+				if (!verified || verified.name !== name) {
+					return new Response('Unauthorized', { status: 401 });
+				}
 			}
 
 			const allPeriods = await this.loadPeriodsFromStorage();
@@ -286,15 +335,16 @@ export class MarketRoom extends DurableObject<Env> {
 		try {
 			const role = url.searchParams.get('role') || 'participant';
 			const name = url.searchParams.get('name') || 'unknown';
-
 			const market = url.searchParams.get('market');
-			if (market && !this.marketName) {
-				this.marketName = market;
-				await this.ctx.storage.put('marketName', this.marketName);
-			}
 
 			if (role === 'admin' && !(await this.isAuthorized(url))) {
 				return new Response('Unauthorized', { status: 401 });
+			}
+
+			// Persist market name only after auth succeeds (admin verified above)
+			if (role === 'admin' && market && !this.marketName) {
+				this.marketName = market;
+				await this.ctx.storage.put('marketName', this.marketName);
 			}
 
 			let joinError: string | null = null;
@@ -303,24 +353,31 @@ export class MarketRoom extends DurableObject<Env> {
 				const verified = await verifyPlayerToken(token, this.env.ADMIN_PASSWORD);
 				if (!verified || verified.name !== name) {
 					joinError = 'Invalid or expired session. Please sign in again.';
-				} else if (this.game.players[name]) {
-					// Reconnecting — verify UIN matches
-					if (this.game.players[name].uin !== verified.uin) {
-						joinError = 'This name is already taken by another student.';
-					}
 				} else {
-					// New player — attempt to join
-					const result = joinGame(this.game, this.kickedPlayers, name, verified.uin);
-					if (result === 'ok') {
-						await this.persistAndBroadcast();
+					// Token verified — safe to persist market name
+					if (market && !this.marketName) {
+						this.marketName = market;
+						await this.ctx.storage.put('marketName', this.marketName);
+					}
+					if (this.game.players[name]) {
+						// Reconnecting — verify UIN matches
+						if (this.game.players[name].uin !== verified.uin) {
+							joinError = 'This name is already taken by another student.';
+						}
 					} else {
-						const messages: Record<string, string> = {
-							kicked: 'You have been removed from this game.',
-							not_forming: 'This game is no longer accepting players.',
-							invalid_name: 'Invalid name format.',
-							name_taken: 'This name is already taken.'
-						};
-						joinError = messages[result];
+						// New player — attempt to join
+						const result = joinGame(this.game, this.kickedPlayers, name, verified.uin);
+						if (result === 'ok') {
+							await this.persistAndBroadcast();
+						} else {
+							const messages: Record<string, string> = {
+								kicked: 'You have been removed from this game.',
+								not_forming: 'This game is no longer accepting players.',
+								invalid_name: 'Invalid name format.',
+								name_taken: 'This name is already taken.'
+							};
+							joinError = messages[result];
+						}
 					}
 				}
 			}
@@ -334,6 +391,17 @@ export class MarketRoom extends DurableObject<Env> {
 			const [client, server] = Object.values(pair);
 
 			this.ctx.acceptWebSocket(server, [role, name]);
+
+			// Cancel any pending inactivity cleanup alarm (someone reconnected)
+			if (this.game.state !== 'completed') {
+				const cleanupAt = await this.ctx.storage.get<number>('cleanupAt');
+				if (cleanupAt) {
+					await this.ctx.storage.delete('cleanupAt');
+					if (!this.game.auto_advance) {
+						await this.ctx.storage.deleteAlarm();
+					}
+				}
+			}
 
 			// Close stale connections for the same identity (last-connection-wins)
 			for (const existing of this.ctx.getWebSockets()) {
@@ -387,13 +455,13 @@ export class MarketRoom extends DurableObject<Env> {
 				if (role === 'admin' && p) return updateOptions(this.game, p);
 				return false;
 			case 'startGame':
-				if (role === 'admin') return this.handleStartGame();
+				if (role === 'admin') return await this.handleStartGame();
 				return false;
 			case 'advancePeriod':
-				if (role === 'admin') return this.handleAdvancePeriod();
+				if (role === 'admin') return await this.handleAdvancePeriod();
 				return false;
 			case 'setAutoAdvance':
-				if (role === 'admin' && p) return this.handleSetAutoAdvance(p.enabled);
+				if (role === 'admin' && p) return await this.handleSetAutoAdvance(p.enabled);
 				return false;
 			case 'setVisibility':
 				if (role === 'admin' && p) return setVisibility(this.game, p.visibility);
@@ -438,45 +506,45 @@ export class MarketRoom extends DurableObject<Env> {
 		if (this.game.state === 'running') return false;
 		this.closeParticipantSockets(WS_CLOSE_RESET, 'New game created');
 		this.lastClearedPeriod = null;
-		this.ctx.storage.deleteAlarm();
+		await this.ctx.storage.deleteAlarm();
 		await this.clearPeriodStorage();
 		initializeNewGame(this.game, options);
 		this.kickedPlayers.clear();
 		this.kickedPlayersDirty = true;
-		this.ctx.storage.delete('cleanupAt');
+		await this.ctx.storage.delete('cleanupAt');
 		return true;
 	}
 
-	private handleStartGame(): boolean {
+	private async handleStartGame(): Promise<boolean> {
 		if (!startGame(this.game)) return false;
 		this.lastClearedPeriod = null;
-		this.handleAdvancePeriod();
+		await this.handleAdvancePeriod();
 		return true;
 	}
 
-	private handleAdvancePeriod(): boolean {
+	private async handleAdvancePeriod(): Promise<boolean> {
 		const result = advancePeriod(this.game);
 		if (!result) return false;
 		if (result.period) {
-			this.ctx.storage.put(`period:${result.period.number}`, result.period);
+			await this.ctx.storage.put(`period:${result.period.number}`, result.period);
 			this.lastClearedPeriod = result.period;
 		}
 		if (result.completed) {
-			this.ctx.storage.deleteAlarm();
-			this.scheduleCleanupAlarm();
+			await this.ctx.storage.deleteAlarm();
+			await this.scheduleCleanupAlarm();
 		} else if (result.alarmTime) {
-			this.ctx.storage.setAlarm(result.alarmTime);
+			await this.ctx.storage.setAlarm(result.alarmTime);
 		}
 		return true;
 	}
 
-	private handleSetAutoAdvance(enabled: boolean): boolean {
+	private async handleSetAutoAdvance(enabled: boolean): Promise<boolean> {
 		const result = setAutoAdvance(this.game, enabled);
 		if (!result) return false;
 		if (result.deleteAlarm) {
-			this.ctx.storage.deleteAlarm();
+			await this.ctx.storage.deleteAlarm();
 		} else if (result.alarmTime) {
-			this.ctx.storage.setAlarm(result.alarmTime);
+			await this.ctx.storage.setAlarm(result.alarmTime);
 		}
 		return true;
 	}
@@ -488,8 +556,8 @@ export class MarketRoom extends DurableObject<Env> {
 		this.lastClearedPeriod = null;
 		this.kickedPlayers.clear();
 		this.kickedPlayersDirty = true;
-		this.ctx.storage.deleteAlarm();
-		this.ctx.storage.delete('cleanupAt');
+		await this.ctx.storage.deleteAlarm();
+		await this.ctx.storage.delete('cleanupAt');
 		this.lastRegistrySnapshot = '';
 		await this.clearPeriodStorage();
 		return true;
@@ -565,7 +633,7 @@ export class MarketRoom extends DurableObject<Env> {
 	 * Registry is only updated when the snapshot string changes (avoids redundant DO-to-DO RPC).
 	 * WS sends are fire-and-forget; failed sends close the socket.
 	 */
-	private async persistAndBroadcast(): Promise<void> {
+	private async persistAndBroadcast(options?: { adminOnly?: boolean }): Promise<void> {
 		const { periods: _periods, ...meta } = this.game;
 		const batch: Record<string, unknown> = { game: meta };
 		if (this.kickedPlayersDirty) {
@@ -587,6 +655,7 @@ export class MarketRoom extends DurableObject<Env> {
 		for (const ws of this.ctx.getWebSockets()) {
 			try {
 				const tags = this.ctx.getTags(ws);
+				if (options?.adminOnly && tags[0] !== 'admin') continue;
 				ws.send(JSON.stringify({
 					type: 'gameState',
 					payload: getVisibleState({

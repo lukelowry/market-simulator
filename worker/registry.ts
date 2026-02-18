@@ -28,10 +28,7 @@ export async function pushToRegistry(
 		const registry = registryNS.get(registryId);
 
 		if (game.state === 'uninitialized') {
-			await registry.fetch(new Request('https://registry/remove', {
-				method: 'POST',
-				body: JSON.stringify({ name: marketName })
-			}));
+			await registryRemove(registryNS, marketName);
 		} else {
 			await registry.fetch(new Request('https://registry/update', {
 				method: 'POST',
@@ -39,7 +36,7 @@ export async function pushToRegistry(
 					name: marketName,
 					state: game.state,
 					visibility: game.visibility,
-					playerCount: game.nplayers,
+					playerCount: game.nplayers, // nplayers in GameState → playerCount in registry/frontend
 					maxPlayers: game.options?.max_participants ?? 0,
 					updatedAt: Date.now()
 				})
@@ -52,6 +49,16 @@ export async function pushToRegistry(
 	}
 }
 
+/** Send a remove request to the registry DO. */
+async function registryRemove(registryNS: DurableObjectNamespace, marketName: string): Promise<void> {
+	const registryId = registryNS.idFromName('global');
+	const registry = registryNS.get(registryId);
+	await registry.fetch(new Request('https://registry/remove', {
+		method: 'POST',
+		body: JSON.stringify({ name: marketName })
+	}));
+}
+
 /** Remove a market from the global MarketRegistry DO. */
 export async function removeFromRegistry(
 	registryNS: DurableObjectNamespace,
@@ -59,12 +66,7 @@ export async function removeFromRegistry(
 ): Promise<void> {
 	if (!marketName) return;
 	try {
-		const registryId = registryNS.idFromName('global');
-		const registry = registryNS.get(registryId);
-		await registry.fetch(new Request('https://registry/remove', {
-			method: 'POST',
-			body: JSON.stringify({ name: marketName })
-		}));
+		await registryRemove(registryNS, marketName);
 	} catch (err) {
 		console.error('Registry remove failed:', err);
 	}

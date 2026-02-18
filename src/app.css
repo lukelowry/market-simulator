@@ -35,6 +35,9 @@
 	--color-info: #4a7c8a;
 	--color-info-bg: rgba(74, 124, 138, 0.08);
 
+	--color-silver: #a8a8a8;
+	--color-bronze: #cd7f32;
+
 	/* Typography */
 	--font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
 	--font-body: 'Source Sans 3', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -321,6 +324,7 @@ tbody td {
 .badge-warning { @apply bg-warning-bg text-warning; }
 .badge-info { @apply bg-info-bg text-info; }
 .badge-maroon { @apply bg-maroon text-text-inverse; }
+.badge-danger { @apply bg-danger-bg text-danger; }
 .badge-muted { @apply bg-cream-dark text-text-muted; }
 
 /* ----- Callouts ----- */

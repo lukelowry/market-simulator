@@ -14,6 +14,9 @@ const CHECK_INTERVAL_MS = 500;
 /**
  * Creates a disconnect timer that sets `tooLong = true` when the WS has been
  * disconnected and reconnecting for longer than {@link DISCONNECT_THRESHOLD_MS}.
+ *
+ * MUST be called during component initialization (synchronously inside a `<script>` block)
+ * so the internal `$effect` has a valid reactive context for cleanup on destroy.
  */
 export function createDisconnectTimer() {
 	let tooLong = $state(false);

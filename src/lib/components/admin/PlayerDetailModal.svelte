@@ -10,7 +10,7 @@
 
 	const player = $derived(game.state.players[playerId]);
 	const online = $derived(game.state.connectedClients?.includes(playerId) ?? false);
-	const isRunningOrCompleted = $derived(game.state.state === 'running' || game.state.state === 'completed');
+	const isRunningOrCompleted = $derived(game.isActive);
 	const isFormingOrFull = $derived(game.state.state === 'forming' || game.state.state === 'full');
 
 	const playerGens = $derived(
@@ -152,11 +152,11 @@
 									<tr>
 										<td>{pd.number}</td>
 										<td>{pd.load}</td>
-										<td>{pd.marginal ?? '—'}</td>
-										<td>{pd.revenue ?? '—'}</td>
-										<td>{pd.costs ?? '—'}</td>
-										<td class:text-success={(pd.profit ?? 0) > 0} class:text-danger={(pd.profit ?? 0) < 0}>{pd.profit ?? '—'}</td>
-										<td>{pd.money ?? '—'}</td>
+										<td>{pd.marginal != null ? `$${pd.marginal.toLocaleString()}` : '—'}</td>
+										<td>{pd.revenue != null ? `$${pd.revenue.toLocaleString()}` : '—'}</td>
+										<td>{pd.costs != null ? `$${pd.costs.toLocaleString()}` : '—'}</td>
+										<td class:text-success={(pd.profit ?? 0) > 0} class:text-danger={(pd.profit ?? 0) < 0}>{pd.profit != null ? `$${pd.profit.toLocaleString()}` : '—'}</td>
+										<td>{pd.money != null ? `$${pd.money.toLocaleString()}` : '—'}</td>
 									</tr>
 								{/each}
 							</tbody>

@@ -10,7 +10,8 @@
 		try {
 			const isAdmin = connection.role === 'admin';
 			const key = isAdmin ? (connection.adminKey || undefined) : undefined;
-			const data = await fetchCsvData(connection.marketName, isAdmin ? 'admin' : 'participant', connection.participantName, key);
+			const token = !isAdmin ? (connection.playerToken || undefined) : undefined;
+			const data = await fetchCsvData(connection.marketName, isAdmin ? 'admin' : 'participant', connection.participantName, key, token);
 			const csvData = generateCsvFromData(data, isAdmin, connection.participantName);
 			downloadCsv(csvData);
 		} catch (err) {

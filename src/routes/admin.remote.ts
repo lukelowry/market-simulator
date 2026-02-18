@@ -3,7 +3,7 @@
  * Admin remote functions. Replaces /api/markets/* REST endpoints.
  */
 
-import { command, query } from '$app/server';
+import { command } from '$app/server';
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { isAdmin } from '$worker/auth.js';
@@ -76,6 +76,17 @@ export const getMarketInfo = command(
 	}
 );
 
+/** Race a promise against a timeout. Returns the result or a timeout error. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		const timer = setTimeout(() => reject(new Error('timeout')), ms);
+		promise.then(
+			(v) => { clearTimeout(timer); resolve(v); },
+			(e) => { clearTimeout(timer); reject(e); }
+		);
+	});
+}
+
 export const getBulkMarketInfo = command(
 	v.object({ key: v.string() }),
 	async ({ key }) => {
@@ -86,9 +97,13 @@ export const getBulkMarketInfo = command(
 
 		const results = await Promise.allSettled(
 			marketList.map(async (m) => {
-				const res = await getMarketRoom(m.name).fetch(
-					new Request(`https://room/info?key=${encodeURIComponent(key)}`)
+				const res = await withTimeout(
+					getMarketRoom(m.name).fetch(
+						new Request(`https://room/info?key=${encodeURIComponent(key)}`)
+					),
+					8000 // 8s per-DO timeout
 				);
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const info = await res.json();
 				return { name: m.name, ...(info as object) };
 			})
@@ -96,7 +111,8 @@ export const getBulkMarketInfo = command(
 
 		const infos = results.map((r, i) => {
 			if (r.status === 'fulfilled') return r.value;
-			return { name: marketList[i].name, error: 'Failed to fetch info' };
+			const reason = r.reason instanceof Error ? r.reason.message : 'unknown';
+			return { name: marketList[i].name, error: `Failed: ${reason}` };
 		});
 
 		return { markets: infos };

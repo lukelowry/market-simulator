@@ -56,6 +56,8 @@ let pongTimeout: ReturnType<typeof setTimeout> | null = null;
 let reconnectAttempt = 0;
 let awaitingPong = false;
 let hasConnectedOnce = false;
+/** Tracks whether ANY successful connection was ever made in this browser session. Reset by softDisconnect (market switch = new connection context). */
+let sessionEstablishedOnce = false;
 
 const PING_INTERVAL_MS = 30_000;
 const PONG_TIMEOUT_MS = 5_000;
@@ -65,6 +67,7 @@ const RECONNECT_MAX_MS = 30_000;
 const WS_CLOSE_REPLACED = 4000;
 const WS_CLOSE_KICKED = 4001;
 const WS_CLOSE_RESET = 4002;
+const WS_CLOSE_DELETED = 4003;
 
 /**
  * Application-defined close codes that signal the server rejected or forcibly closed the connection.
@@ -73,7 +76,8 @@ const WS_CLOSE_RESET = 4002;
 const TERMINAL_CLOSE_MESSAGES: Record<number, string> = {
 	[WS_CLOSE_KICKED]: 'You have been removed from this game.',
 	[WS_CLOSE_REPLACED]: 'Connected from another tab.',
-	[WS_CLOSE_RESET]: 'The game was reset by the instructor.'
+	[WS_CLOSE_RESET]: 'The game was reset by the instructor.',
+	[WS_CLOSE_DELETED]: 'This market has been deleted by the instructor.'
 };
 
 /** Exponential backoff with ±20% jitter, capped at 30s. Prevents thundering herd on server recovery. */
@@ -159,6 +163,7 @@ export function connect(market: string, role: string, name: string, key?: string
 
 	ws.onopen = () => {
 		hasConnectedOnce = true;
+		sessionEstablishedOnce = true;
 		connection.connected = true;
 		connection.reconnecting = false;
 		connection.disconnectedAt = null;
@@ -224,7 +229,7 @@ export function connect(market: string, role: string, name: string, key?: string
 		}
 
 		if (reconnectParams) {
-			if (!hasConnectedOnce && reconnectAttempt >= 3) {
+			if (!sessionEstablishedOnce && !hasConnectedOnce && reconnectAttempt >= 3) {
 				reconnectParams = null;
 				connection.reconnecting = false;
 				connection.connectionError = 'Session expired. Please sign in again.';
@@ -259,6 +264,7 @@ export function softDisconnect(): void {
 	closeWebSocket();
 	reconnectAttempt = 0;
 	hasConnectedOnce = false;
+	sessionEstablishedOnce = false;
 	connection.reconnecting = false;
 	connection.disconnectedAt = null;
 	connection.connected = false;

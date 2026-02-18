@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { GameOptions, PaymentMethod } from '$lib/types/game.js';
 
 	let {
@@ -71,9 +72,9 @@
 		if (e.key === 'Escape') onclose();
 	}
 
-	let nameInput: HTMLInputElement | undefined = $state();
-	$effect(() => {
-		if (nameInput) nameInput.focus();
+	let nameInput: HTMLInputElement | undefined;
+	onMount(() => {
+		nameInput?.focus();
 	});
 </script>
 
@@ -116,7 +117,7 @@
 				{#each (['quick', 'standard', 'extended'] as const) as key}
 					{@const p = presets[key]}
 					<button
-						class="flex flex-col gap-0.5 py-3 px-4 border-[1.5px] rounded cursor-pointer transition-all duration-100 ease-brand text-left font-body {selectedPreset === key ? 'border-maroon border-l-[3px] bg-maroon-faint' : 'bg-white border-border-light hover:border-border hover:shadow-xs'}"
+						class="flex flex-col gap-0.5 py-3 px-4 border-[1.5px] rounded cursor-pointer transition-all duration-100 ease-brand text-left font-body {selectedPreset === key ? 'border-maroon bg-maroon-faint shadow-[inset_3px_0_0_var(--color-maroon)]' : 'bg-white border-border-light hover:border-border hover:shadow-xs'}"
 						onclick={() => applyPreset(key)}
 					>
 						<span class="font-bold text-sm {selectedPreset === key ? 'text-maroon' : 'text-text-primary'}">{p.label}</span>

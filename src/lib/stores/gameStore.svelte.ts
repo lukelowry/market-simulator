@@ -26,6 +26,9 @@ class GameStore {
 	/** Server-authoritative player count. May differ from `Object.keys(players).length` during reconnection. */
 	playerCount = $derived(this.state.nplayers);
 
+	/** True when game is running or completed — the two states with period/gen data to display. */
+	isActive = $derived(this.state.state === 'running' || this.state.state === 'completed');
+
 	/** Player's leaderboard rank (participant-only). Null when not running/completed or when admin. */
 	playerRank = $derived(this.state.rank ?? null);
 

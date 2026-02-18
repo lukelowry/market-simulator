@@ -13,7 +13,7 @@ import { defaultGameState } from './types';
 
 export type JoinResult = 'ok' | 'kicked' | 'not_forming' | 'invalid_name' | 'name_taken';
 
-export function isValidName(name: string): boolean {
+function isValidName(name: string): boolean {
 	const trimmed = name.trim();
 	return trimmed.length >= 1 && trimmed.length <= 20 && /^[a-zA-Z0-9 _-]+$/.test(trimmed);
 }
@@ -104,7 +104,7 @@ export function kickPlayer(game: GameState, kickedPlayers: Set<string>, playerId
  * Assign generators from the selected preset to every player.
  * Gen IDs are sequential across all players: player 1 gets Gen 1..N, player 2 gets Gen N+1..2N, etc.
  */
-export function distributeGenerators(game: GameState): void {
+function distributeGenerators(game: GameState): void {
 	game.gens = {};
 	const templates = GEN_PRESETS[game.options?.gen_preset ?? 'standard'] ?? GEN_PRESETS.standard;
 	let geni = 1;
@@ -126,7 +126,7 @@ export function distributeGenerators(game: GameState): void {
  * Compute demand for a period. Formula: `nplayers * 100 MW * profile[(period-1) % 24]`.
  * @param applyJitter - false for deterministic preview (display), true for actual clearing (random ± load_jitter%).
  */
-export function computeLoad(game: GameState, periodNumber: number, applyJitter = false): number {
+function computeLoad(game: GameState, periodNumber: number, applyJitter = false): number {
 	const profile = LOAD_PROFILES[game.options?.load_profile ?? 'realistic'] ?? LOAD_PROFILES.realistic;
 	const base = game.nplayers * 100 * profile[(periodNumber - 1) % 24];
 	if (!applyJitter) return Math.floor(base);
@@ -156,7 +156,7 @@ export function getNextLoad(game: GameState): number | null {
  * Caller is responsible for persisting the period to storage.
  * Returns null if period is 0 or options are missing (no-op).
  */
-export function clearPeriod(game: GameState): Period | null {
+function clearPeriod(game: GameState): Period | null {
 	if (game.period === 0 || !game.options) return null;
 
 	const period: Period = {
@@ -185,7 +185,7 @@ export function clearPeriod(game: GameState): Period | null {
 
 // --- Game Lifecycle ---
 
-/** Reset game fields for a new game. Returns the sanitized options. */
+/** Reset game fields for a new game. */
 export function initializeNewGame(game: GameState, options: GameOptions): void {
 	game.gens = {};
 	game.periods = [];

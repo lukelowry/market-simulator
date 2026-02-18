@@ -10,7 +10,10 @@
       "Bash(del \"C:\\\\Users\\\\wyattluke.lowery\\\\Documents\\\\GitHub\\\\market-simulator\\\\src\\\\lib\\\\components\\\\admin\\\\GameConfig.svelte\")",
       "Bash(npx wrangler deployments:*)",
       "Bash(npx wrangler tail:*)",
-      "WebFetch(domain:svelte.dev)"
+      "WebFetch(domain:svelte.dev)",
+      "Bash(node scripts/patch-worker.js:*)",
+      "Bash(echo:*)",
+      "Bash(wc:*)"
     ]
   }
 }

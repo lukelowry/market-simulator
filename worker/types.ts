@@ -102,6 +102,7 @@ export interface GameState {
 	periods: Period[];
 	/** Current active period number. 0 = game not started. */
 	period: number;
+	/** Player count. Exposed as `playerCount` in registry RPCs and frontend stores. */
 	nplayers: number;
 	auto_advance: boolean;
 	/** Epoch ms deadline when the current period auto-advances. */

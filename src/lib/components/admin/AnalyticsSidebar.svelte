@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { game } from '$lib/stores/gameStore.svelte.js';
+	import { getTotalCapacity } from '$lib/utils/marketCalcs.js';
 
-	const isRunningOrCompleted = $derived(game.state.state === 'running' || game.state.state === 'completed');
+	const isRunningOrCompleted = $derived(game.isActive);
 
 	const marketStats = $derived.by(() => {
 		const completed = game.state.periods;
-		const totalCap = Object.values(game.state.gens).reduce((s, g) => s + g.capacity, 0);
 		const offers = Object.values(game.state.gens).map(g => g.offer);
 		const moneys = Object.values(game.state.players).map(p => p.money);
 		return {
 			totalLoad: completed.reduce((s, p) => s + p.load, 0),
 			periodsCleared: completed.length,
-			totalCapacity: totalCap,
+			totalCapacity: getTotalCapacity(game.state.gens),
 			avgOffer: offers.length > 0 ? Math.round(offers.reduce((a, b) => a + b, 0) / offers.length) : null,
 			moneySpread: moneys.length < 2 ? null : Math.max(...moneys) - Math.min(...moneys)
 		};
@@ -29,7 +29,7 @@
 			<div class="flex flex-col">
 				{#each leaderboard as player, i}
 					<div class="flex items-center gap-3 py-3 px-5 border-b border-border-light transition-[background] duration-100 ease-brand last:border-b-0 hover:bg-gold-faint {i === 0 ? 'bg-gradient-to-r from-gold-faint to-transparent' : ''}">
-						<span class="w-6 h-6 flex items-center justify-center font-mono text-xs font-bold rounded-full shrink-0 {i === 0 ? 'bg-gold text-white' : i === 1 ? 'bg-[#b8b8b8] text-white' : i === 2 ? 'bg-[#cd7f32] text-white' : 'bg-cream-dark text-text-muted'}">{i + 1}</span>
+						<span class="w-6 h-6 flex items-center justify-center font-mono text-xs font-bold rounded-full shrink-0 {i === 0 ? 'bg-gold text-white' : i === 1 ? 'bg-silver text-white' : i === 2 ? 'bg-bronze text-white' : 'bg-cream-dark text-text-muted'}">{i + 1}</span>
 						<div class="flex-1 min-w-0">
 							<span class="block text-sm font-semibold text-text-primary mb-0.5">{player.key}</span>
 							<div class="h-[3px] bg-border-light rounded-full overflow-hidden">

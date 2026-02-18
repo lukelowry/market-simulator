@@ -3,6 +3,7 @@
 	import { stateBadge, stateAbbr } from '$lib/utils/stateLabels.js';
 	import ConfirmModal from '$lib/components/shared/ConfirmModal.svelte';
 
+	import { untrack } from 'svelte';
 	import { connection } from '$lib/stores/connectionStore.svelte.js';
 	import { destroyMarket as destroyMarketRemote, purgeMarkets, getMarketInfo, getBulkMarketInfo } from '../../../routes/admin.remote';
 
@@ -39,8 +40,9 @@
 		loading = true;
 		error = '';
 		try {
-			const data = await getBulkMarketInfo({ key: connection.adminKey! });
-			marketInfos = data.markets ?? [];
+			if (!connection.adminKey) { loading = false; return; }
+			const data = await getBulkMarketInfo({ key: connection.adminKey });
+			marketInfos = (data.markets ?? []) as MarketStorageInfo[];
 		} catch {
 			error = 'Failed to fetch storage info.';
 			marketInfos = [];
@@ -51,7 +53,7 @@
 	async function handleDestroyMarket(name: string) {
 		destroyingMarket = name;
 		try {
-			await destroyMarketRemote({ name, key: connection.adminKey! });
+			await destroyMarketRemote({ name, key: connection.adminKey ?? '' });
 			marketInfos = marketInfos.filter(m => m.name !== name);
 		} catch {
 			console.warn('Failed to destroy market:', name);
@@ -63,7 +65,7 @@
 		purging = true;
 		showPurgeConfirm = false;
 		try {
-			await purgeMarkets({ key: connection.adminKey!, destroyStorage: true });
+			await purgeMarkets({ key: connection.adminKey ?? '', destroyStorage: true });
 			marketInfos = [];
 		} catch {
 			console.warn('Failed to purge markets');
@@ -77,7 +79,7 @@
 		probeError = '';
 		probeResult = null;
 		try {
-			const info = await getMarketInfo({ name: probeName.trim(), key: connection.adminKey! });
+			const info = await getMarketInfo({ name: probeName.trim(), key: connection.adminKey ?? '' });
 			probeResult = { name: probeName.trim(), ...info };
 		} catch {
 			probeError = 'Failed to probe DO.';
@@ -101,10 +103,11 @@
 		if (e.key === 'Escape' && !showPurgeConfirm) close();
 	}
 
-	// Fetch data when modal opens
+	// Fetch data when modal opens — untrack to prevent $effect from tracking
+	// reactive reads inside fetchAllInfo (connection.adminKey, command() internals)
 	$effect(() => {
 		if (isOpen) {
-			fetchAllInfo();
+			untrack(() => fetchAllInfo());
 		}
 	});
 </script>
@@ -140,7 +143,7 @@
 						<span class="text-[10px] font-semibold uppercase tracking-brand text-text-muted">Est. Storage</span>
 						<span class="font-mono text-sm font-bold text-text-primary">{loading ? '...' : formatBytes(totalBytes)}</span>
 					</div>
-					<div class="flex flex-col items-center justify-center">
+					<div class="flex flex-col items-center justify-center py-2.5 px-3 bg-cream rounded border border-border-light">
 						<button
 							class="btn btn-danger btn-sm w-full"
 							disabled={loading || purging || marketInfos.length === 0}
@@ -149,6 +152,14 @@
 							{purging ? 'Purging...' : 'Purge All'}
 						</button>
 					</div>
+				</div>
+			</div>
+
+			<!-- Auto-cleanup notice -->
+			<div class="px-6 pb-1">
+				<div class="flex items-start gap-2 py-2.5 px-3 bg-cream rounded border border-border-light text-xs text-text-muted">
+					<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" class="shrink-0 mt-0.5 text-text-muted"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8.93 6.588l-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
+					<span>Completed games are automatically cleaned up after 48 hours. Abandoned games (no connected players, not running) are also cleaned up after 48 hours.</span>
 				</div>
 			</div>
 
@@ -181,15 +192,19 @@
 							</thead>
 							<tbody>
 								{#each marketInfos as market (market.name)}
-									<tr>
+									<tr class={market.error ? 'opacity-60' : ''}>
 										<td class="font-semibold font-body text-text-primary">{market.name}</td>
 										<td>
-											<span class="badge py-[1px] px-2 text-[10px] {stateBadgeClass(market.state)}">
-												{stateAbbr(market.state)}
-											</span>
+											{#if market.error}
+												<span class="badge py-[1px] px-2 text-[10px] badge-danger" title={market.error}>ERR</span>
+											{:else}
+												<span class="badge py-[1px] px-2 text-[10px] {stateBadgeClass(market.state)}">
+													{stateAbbr(market.state)}
+												</span>
+											{/if}
 										</td>
-										<td class="text-right">{market.playerCount}</td>
-										<td class="text-right">{formatBytes(market.estimatedStorageBytes ?? 0)}</td>
+										<td class="text-right">{market.error ? '–' : market.playerCount}</td>
+										<td class="text-right">{market.error ? '–' : formatBytes(market.estimatedStorageBytes ?? 0)}</td>
 										<td class="text-right">
 											<button
 												class="btn btn-danger btn-sm"

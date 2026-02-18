@@ -9,7 +9,8 @@ import type { Env } from '$worker/env.js';
 /** Get the typed Cloudflare env from the current request context. */
 export function getEnv(): Env {
 	const { platform } = getRequestEvent();
-	return platform!.env;
+	if (!platform) throw new Error('Cloudflare platform bindings not available');
+	return platform.env;
 }
 
 /** Get a MarketRoom Durable Object stub by market name. */

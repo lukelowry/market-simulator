@@ -74,6 +74,8 @@ export const WS_CLOSE_REPLACED = 4000;
 export const WS_CLOSE_KICKED = 4001;
 /** Game was reset or a new game was created — all participants dropped. */
 export const WS_CLOSE_RESET = 4002;
+/** Market was deleted by the instructor — DO storage wiped. */
+export const WS_CLOSE_DELETED = 4003;
 
 export function clamp(value: number, min: number, max: number): number {
 	return Math.min(Math.max(value, min), max);

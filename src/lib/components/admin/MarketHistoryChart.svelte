@@ -24,7 +24,7 @@
 	);
 
 	let canvas: HTMLCanvasElement | undefined;
-	let chart: Chart | null = null;
+	let chart = $state<Chart | null>(null);
 	let hasData = $state(false);
 
 	onMount(() => {

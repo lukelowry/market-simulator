@@ -1,7 +1,7 @@
 name = "market-simulator"
 main = "worker-entry.ts"
 compatibility_date = "2024-12-01"
-compatibility_flags = ["nodejs_als"]
+compatibility_flags = ["nodejs_als", "nodejs_compat"]
 workers_dev = true
 preview_urls = true
 

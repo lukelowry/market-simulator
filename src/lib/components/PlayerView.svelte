@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { connection } from '$lib/stores/connectionStore.svelte.js';
 	import { game } from '$lib/stores/gameStore.svelte.js';
 	import { connect, disconnect } from '$lib/services/websocket.js';
@@ -12,6 +12,7 @@
 	import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
 	import MarketList from '$lib/components/MarketList.svelte';
 	import { createDisconnectTimer } from '$lib/utils/disconnectTimer.svelte.js';
+	import { GEN_COUNT_BY_PRESET } from '$lib/utils/marketCalcs.js';
 
 	let showWelcomeBanner = $state(true);
 	let isJoining = $state(false);
@@ -31,13 +32,14 @@
 
 	// One-time init: URL auto-join and welcome banner (reads reactive stores, must not re-run)
 	onMount(() => {
-		const urlMarket = $page.url.searchParams.get('market');
+		const urlMarket = page.url.searchParams.get('market');
 		if (urlMarket && connection.participantName) {
 			joinMarket(urlMarket);
 		}
-		setTimeout(() => {
+		const bannerTimer = setTimeout(() => {
 			showWelcomeBanner = false;
 		}, 3000);
+		return () => clearTimeout(bannerTimer);
 	});
 
 	function joinMarket(market: string) {
@@ -56,9 +58,7 @@
 	const showGame = $derived(connection.connected && game.state.state !== 'uninitialized');
 	const showConnectionStatus = $derived(isJoining && !showGame && !connection.connectionError);
 	const showDisconnectError = $derived(!connection.connected && !connection.reconnecting && connection.connectionError !== null);
-	const showGameData = $derived(
-		game.state.state === 'running' || game.state.state === 'completed'
-	);
+	const showGameData = $derived(game.isActive);
 	const isWaiting = $derived(
 		game.state.state === 'forming' || game.state.state === 'full'
 	);
@@ -69,13 +69,9 @@
 	}
 
 	const playerNames = $derived(Object.keys(game.state.players));
-	const genCount = $derived.by(() => {
-		const preset = game.state.options?.gen_preset ?? 'standard';
-		return preset === 'simple' ? 3 : preset === 'competitive' ? 7 : 5;
-	});
+	const genCount = $derived(GEN_COUNT_BY_PRESET[game.state.options?.gen_preset ?? 'standard'] ?? 5);
 
 	const disconnectTimer = createDisconnectTimer();
-	const disconnectedTooLong = $derived(disconnectTimer.tooLong);
 
 </script>
 
@@ -121,13 +117,13 @@
 	</div>
 {:else}
 	<!-- Game View -->
-	{#if connection.reconnecting && !disconnectedTooLong}
+	{#if connection.reconnecting && !disconnectTimer.tooLong}
 		<div class="flex items-center gap-2 py-2 px-4 mb-4 bg-warning-bg border border-warning/20 rounded text-warning text-sm max-w-[640px] mx-auto">
 			<div class="w-3 h-3 border-2 border-warning/40 border-t-warning rounded-full animate-spin shrink-0" aria-hidden="true"></div>
 			<span>Reconnecting...</span>
 		</div>
 	{/if}
-	{#if disconnectedTooLong}
+	{#if disconnectTimer.tooLong}
 		<div class="flex flex-col items-center text-center py-16 px-8 text-text-muted">
 			<div class="w-8 h-8 border-3 border-border-light border-t-maroon rounded-full animate-spin mb-5" aria-hidden="true"></div>
 			<h3 class="mb-3 text-text-secondary">Reconnecting to {connection.marketName}</h3>
@@ -167,9 +163,7 @@
 								<div class="flex flex-wrap gap-2">
 									{#each playerNames as name}
 										<span class="inline-flex items-center gap-1.5 py-1.5 px-3 bg-cream rounded-full text-sm font-medium text-text-primary border border-border-light">
-											{#if name === connection.participantName}
-												<span class="w-2 h-2 rounded-full bg-success shrink-0"></span>
-											{/if}
+											<span class="w-2 h-2 rounded-full shrink-0 {name === connection.participantName ? 'bg-success' : 'invisible'}"></span>
 											{name}
 											{#if name === connection.participantName}
 												<span class="text-text-muted text-xs">(you)</span>

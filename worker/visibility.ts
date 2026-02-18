@@ -67,7 +67,7 @@ export function getVisibleState(params: VisibleStateParams): object {
 }
 
 /** Strip gens from period data to reduce broadcast size (only needed for CSV export). */
-export function stripPeriodGens(periods: Period[]): object[] {
+function stripPeriodGens(periods: Period[]): object[] {
 	return periods.map(({ gens, ...rest }) => rest);
 }
 
@@ -80,14 +80,14 @@ export function stripPlayerInternals(players: Record<string, Player>): Record<st
 	return result;
 }
 
-export function getPlayerRank(name: string, players: Record<string, Player>): number {
+function getPlayerRank(name: string, players: Record<string, Player>): number {
 	const sorted = Object.entries(players)
 		.sort(([, a], [, b]) => b.money - a.money);
 	const idx = sorted.findIndex(([key]) => key === name);
 	return idx >= 0 ? idx + 1 : Object.keys(players).length;
 }
 
-export function filterPlayers(name: string, players: Record<string, Player>): Record<string, { money: number; last_offer_time: number }> {
+function filterPlayers(name: string, players: Record<string, Player>): Record<string, { money: number; last_offer_time: number }> {
 	const result: Record<string, { money: number; last_offer_time: number }> = {};
 	for (const [key, player] of Object.entries(players)) {
 		result[key] = key === name
@@ -97,7 +97,7 @@ export function filterPlayers(name: string, players: Record<string, Player>): Re
 	return result;
 }
 
-export function filterGens(name: string, gens: Record<string, Generator>): Record<string, Generator> {
+function filterGens(name: string, gens: Record<string, Generator>): Record<string, Generator> {
 	const result: Record<string, Generator> = {};
 	for (const [key, gen] of Object.entries(gens)) {
 		if (gen.owner === name) result[key] = gen;
@@ -105,7 +105,7 @@ export function filterGens(name: string, gens: Record<string, Generator>): Recor
 	return result;
 }
 
-export function filterPeriods(name: string, periods: Period[]): object[] {
+function filterPeriods(name: string, periods: Period[]): object[] {
 	return periods.map((p) => ({
 		number: p.number,
 		load: p.load,

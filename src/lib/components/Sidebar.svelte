@@ -5,7 +5,7 @@
 
 	const myPlayer = $derived(game.state.players[connection.participantName] ?? null);
 	const totalPlayers = $derived(Object.keys(game.state.players).length);
-	const isActive = $derived(game.state.state === 'running' || game.state.state === 'completed');
+	const isActive = $derived(game.isActive);
 	const hasSubmittedThisPeriod = $derived(
 		myPlayer !== null && myPlayer.last_offer_time > game.state.last_advance_time
 	);
@@ -74,7 +74,7 @@
 						{#if countdownSeconds !== null}
 							{countdownSeconds}s
 						{:else}
-							Paused
+							<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" class="inline-block align-[-2px] text-text-muted" aria-label="Paused"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg>
 						{/if}
 					</span>
 				</div>

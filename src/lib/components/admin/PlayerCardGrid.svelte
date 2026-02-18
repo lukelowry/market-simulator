@@ -3,7 +3,7 @@
 
 	let { onselect }: { onselect: (playerId: string) => void } = $props();
 
-	const isRunningOrCompleted = $derived(game.state.state === 'running' || game.state.state === 'completed');
+	const isRunningOrCompleted = $derived(game.isActive);
 
 	const offerStatus = $derived.by(() => {
 		const result: Record<string, 'submitted' | 'pending' | 'none'> = {};

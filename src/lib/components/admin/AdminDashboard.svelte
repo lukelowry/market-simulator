@@ -24,6 +24,7 @@
 
 	let showCreateModal = $state(false);
 	let pendingConfig: GameOptions | null = $state(null);
+	let sidebarRefreshKey = $state(0);
 
 	// Paired setup/teardown: co-located via $effect cleanup
 	$effect(() => {
@@ -47,7 +48,7 @@
 
 	// Reset modal state when switching markets to prevent stale data
 	$effect(() => {
-		selectedMarket;
+		const _market = selectedMarket; // read to track dependency
 		selectedPlayer = null;
 		showStorageModal = false;
 		showSettingsModal = false;
@@ -55,15 +56,20 @@
 
 	const showSetup = $derived(connection.connected && game.state.state === 'uninitialized');
 	const showGame = $derived(connection.connected && !showSetup);
-	const isRunningOrCompleted = $derived(game.state.state === 'running' || game.state.state === 'completed');
+	const isRunningOrCompleted = $derived(game.isActive);
+	const showDisconnectError = $derived(
+		!connection.connected && !connection.reconnecting && connection.connectionError !== null
+	);
 
 	async function handleRemoveMarket(name: string) {
 		try {
-			await destroyMarket({ name, key: connection.adminKey! });
+			if (!connection.adminKey) return;
+			await destroyMarket({ name, key: connection.adminKey });
 			if (selectedMarket === name) {
 				softDisconnect();
 				selectedMarket = null;
 			}
+			sidebarRefreshKey++;
 		} catch (err) {
 			console.warn('Failed to remove market:', err);
 		}
@@ -77,6 +83,7 @@
 		selectedMarket = name;
 		connection.marketName = name;
 		connect(name, 'admin', 'admin', connection.adminKey);
+		sidebarRefreshKey++;
 	}
 
 	// Send createGame when connected to a new uninitialized market with pending config
@@ -88,7 +95,6 @@
 	});
 
 	const disconnectTimer = createDisconnectTimer();
-	const disconnectedTooLong = $derived(disconnectTimer.tooLong);
 </script>
 
 <div class="max-w-[1440px] mx-auto pb-16 animate-in">
@@ -97,9 +103,10 @@
 			<MarketSidebar
 				bind:selectedMarket
 				onrequestcreate={() => { showCreateModal = true; }}
+				refreshKey={sidebarRefreshKey}
 			/>
 			<button
-				class="w-full py-2 px-4 border border-border-light rounded bg-white text-text-muted font-body text-xs font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all duration-200 ease-brand shrink-0 hover:border-maroon hover:text-maroon hover:bg-maroon-faint"
+				class="w-full py-2 px-4 border-[1.5px] border-border-light rounded bg-white text-text-muted font-body text-xs font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all duration-200 ease-brand shrink-0 hover:border-maroon hover:text-maroon hover:bg-maroon-faint"
 				onclick={() => { showStorageModal = true; }}
 			>
 				<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -119,13 +126,27 @@
 					<h3 class="mb-3 text-text-secondary">Select a Market</h3>
 					<p class="text-sm max-w-[340px]">Choose a market from the sidebar, or create a new one to get started.</p>
 				</div>
+			{:else if showDisconnectError}
+				<div class="flex flex-col items-center text-center py-16 px-8 text-text-muted">
+					<div class="w-14 h-14 rounded-full bg-danger-bg flex items-center justify-center mx-auto mb-5">
+						<svg class="w-7 h-7 text-danger" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+							<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+							<path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+						</svg>
+					</div>
+					<h3 class="mb-3 text-text-secondary">Disconnected</h3>
+					<p class="text-sm max-w-[340px] mb-6">{connection.connectionError}</p>
+					<button class="btn btn-primary" onclick={() => { connection.connectionError = null; selectedMarket = null; }}>
+						Back to Markets
+					</button>
+				</div>
 			{:else if !connection.connected && !connection.reconnecting}
 				<div class="flex flex-col items-center text-center py-16 px-8 text-text-muted">
 					<div class="w-8 h-8 border-3 border-border-light border-t-maroon rounded-full animate-spin mb-5" aria-hidden="true"></div>
 					<h3 class="mb-3 text-text-secondary">Connecting to {selectedMarket}</h3>
 					<p class="text-sm max-w-[340px]">Establishing connection...</p>
 				</div>
-			{:else if disconnectedTooLong}
+			{:else if disconnectTimer.tooLong}
 				<div class="flex flex-col items-center text-center py-16 px-8 text-text-muted">
 					<div class="w-8 h-8 border-3 border-border-light border-t-maroon rounded-full animate-spin mb-5" aria-hidden="true"></div>
 					<h3 class="mb-3 text-text-secondary">Reconnecting to {selectedMarket}</h3>

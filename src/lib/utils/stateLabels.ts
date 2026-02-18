@@ -29,3 +29,8 @@ export function stateAbbr(state: string | null | undefined): string {
 	if (!state) return 'Empty';
 	return STATES[state]?.abbr ?? state;
 }
+
+/** Short payment method label: 'PAO' or 'LAO'. */
+export function paymentLabel(method: string | undefined): string {
+	return method === 'pay_as_offered' ? 'PAO' : 'LAO';
+}

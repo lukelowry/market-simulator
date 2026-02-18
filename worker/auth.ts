@@ -54,7 +54,7 @@ export async function verifyAdminToken(token: string, secret: string): Promise<b
 	// Verify HMAC (constant-time via crypto.subtle.verify)
 	if (sigHex.length % 2 !== 0) return false;
 	const key = await getKey(secret);
-	return crypto.subtle.verify('HMAC', key, hexToBytes(sigHex), new TextEncoder().encode(expiryHex));
+	return crypto.subtle.verify('HMAC', key, hexToBytes(sigHex) as BufferSource, new TextEncoder().encode(expiryHex));
 }
 
 /** Convenience wrapper: returns false for null/missing/malformed keys without throwing. Safe in unauthenticated contexts. */
@@ -105,7 +105,7 @@ export async function verifyPlayerToken(token: string | null | undefined, secret
 	if (sigHex.length % 2 !== 0) return null;
 	const payload = `${nameHex}.${uinHex}.${expiryHex}`;
 	const key = await getKey(secret);
-	const valid = await crypto.subtle.verify('HMAC', key, hexToBytes(sigHex), new TextEncoder().encode(payload));
+	const valid = await crypto.subtle.verify('HMAC', key, hexToBytes(sigHex) as BufferSource, new TextEncoder().encode(payload));
 	if (!valid) return null;
 
 	try {

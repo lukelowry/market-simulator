@@ -38,7 +38,9 @@
 	// Offer submission tracking
 	let showSubmitToast = $state(false);
 	let toastTimeout: ReturnType<typeof setTimeout> | null = null;
-	onDestroy(() => { if (toastTimeout) clearTimeout(toastTimeout); });
+	let submitDebounce: ReturnType<typeof setTimeout> | null = null;
+	let submitPending = $state(false);
+	onDestroy(() => { if (toastTimeout) clearTimeout(toastTimeout); if (submitDebounce) clearTimeout(submitDebounce); });
 
 	const myPlayer = $derived(game.state.players[connection.participantName] ?? null);
 	const hasSubmittedThisPeriod = $derived(
@@ -46,25 +48,31 @@
 	);
 
 	function submitOffers() {
-		const maxOffer = game.state.options?.max_offer_price ?? 200;
-		const offers: Record<string, number> = {};
-		for (const [genId, value] of Object.entries(offerValues)) {
-			const gen = game.state.gens[genId];
-			if (gen && gen.owner === connection.participantName) {
-				const parsed = parseFloat(value);
-				const clamped = isNaN(parsed) ? gen.offer : Math.min(Math.max(parsed, 0), maxOffer);
-				offers[genId] = clamped;
-				offerValues[genId] = String(clamped);
+		// Debounce rapid clicks — queue the latest, send after 500ms of quiet
+		submitPending = true;
+		if (submitDebounce) clearTimeout(submitDebounce);
+		submitDebounce = setTimeout(() => {
+			submitPending = false;
+			const maxOffer = game.state.options?.max_offer_price ?? 200;
+			const offers: Record<string, number> = {};
+			for (const [genId, value] of Object.entries(offerValues)) {
+				const gen = game.state.gens[genId];
+				if (gen && gen.owner === connection.participantName) {
+					const parsed = parseFloat(value);
+					const clamped = isNaN(parsed) ? gen.offer : Math.min(Math.max(parsed, 0), maxOffer);
+					offers[genId] = clamped;
+					offerValues[genId] = String(clamped);
+				}
 			}
-		}
-		send({ type: 'submitOffers', payload: { offers } });
+			send({ type: 'submitOffers', payload: { offers } });
 
-		// Show transient toast
-		showSubmitToast = true;
-		if (toastTimeout) clearTimeout(toastTimeout);
-		toastTimeout = setTimeout(() => {
-			showSubmitToast = false;
-		}, 2500);
+			// Show transient toast
+			showSubmitToast = true;
+			if (toastTimeout) clearTimeout(toastTimeout);
+			toastTimeout = setTimeout(() => {
+				showSubmitToast = false;
+			}, 2500);
+		}, 500);
 	}
 
 	const isParticipantRunning = $derived(connection.role === 'participant' && game.state.state === 'running');

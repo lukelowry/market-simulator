@@ -554,7 +554,7 @@
 	}
 	.preset-btn--active {
 		border-color: var(--color-maroon);
-		border-left-width: 3px;
+		box-shadow: inset 3px 0 0 var(--color-maroon);
 		background: var(--color-maroon-faint);
 	}
 	.preset-btn--active span:first-child {

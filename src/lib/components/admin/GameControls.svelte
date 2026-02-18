@@ -2,9 +2,9 @@
 	import { game } from '$lib/stores/gameStore.svelte.js';
 	import { connection } from '$lib/stores/connectionStore.svelte.js';
 	import { send } from '$lib/services/websocket.js';
-	import { stateLabel, stateBadge } from '$lib/utils/stateLabels.js';
+	import { stateLabel, stateBadge, paymentLabel } from '$lib/utils/stateLabels.js';
 	import { createCountdown } from '$lib/utils/countdown.svelte.js';
-	import { getOffersSubmitted } from '$lib/utils/marketCalcs.js';
+	import { getOffersSubmitted, getTotalCapacity } from '$lib/utils/marketCalcs.js';
 
 	let { onrequestsettings }: { onrequestsettings?: () => void } = $props();
 
@@ -59,12 +59,11 @@
 	// KPI stats (integrated — replaces separate KpiRow)
 	const marketStats = $derived.by(() => {
 		const costs = game.state.periods.map(p => p.marginal_cost).filter((c): c is number => c !== null);
-		const totalCap = Object.values(game.state.gens).reduce((s, g) => s + g.capacity, 0);
 		return {
 			currentMarginal: costs.length > 0 ? costs[costs.length - 1] : null,
 			avgMarginal: costs.length > 0 ? Math.round(costs.reduce((a, b) => a + b, 0) / costs.length) : null,
 			peakMarginal: costs.length > 0 ? Math.max(...costs) : null,
-			totalCapacity: totalCap,
+			totalCapacity: getTotalCapacity(game.state.gens),
 			currentLoad: game.state.currentLoad ?? 0
 		};
 	});
@@ -76,6 +75,21 @@
 			: 0
 	);
 </script>
+
+{#snippet kpiPair(prefix: string)}
+	<div class="gcp-kpi">
+		<span class="gcp-kpi-value">${marketStats.currentMarginal ?? '—'}</span>
+		<span class="gcp-kpi-label">{prefix}Marginal</span>
+		<span class="gcp-kpi-sub">avg ${marketStats.avgMarginal ?? '—'} · peak ${marketStats.peakMarginal ?? '—'}</span>
+	</div>
+	<div class="gcp-kpi-divider"></div>
+	<div class="gcp-kpi">
+		<span class="gcp-kpi-value">{marketStats.currentLoad}<span class="gcp-kpi-unit"> MW</span></span>
+		<span class="gcp-kpi-label">{prefix}Load</span>
+		<span class="gcp-kpi-sub">of {marketStats.totalCapacity} MW capacity</span>
+	</div>
+	<div class="gcp-kpi-divider"></div>
+{/snippet}
 
 <!-- Ribbon header (from CommandRibbon) -->
 <header class="ribbon">
@@ -182,7 +196,13 @@
 								stroke-linecap="round" transform="rotate(-90 32 32)"
 								class="gcp-countdown-arc" />
 						</svg>
-						<span class="gcp-countdown-text" class:text-danger={isUrgent}>{countdownText}</span>
+						<span class="gcp-countdown-text" class:text-danger={isUrgent}>
+						{#if countdownText}
+							{countdownText}
+						{:else}
+							<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-label="Paused"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg>
+						{/if}
+					</span>
 					</div>
 
 					<!-- Center: period + offers -->
@@ -228,22 +248,11 @@
 
 			<!-- KPI strip -->
 			<div class="gcp-kpi-strip">
-				<div class="gcp-kpi">
-					<span class="gcp-kpi-value">${marketStats.currentMarginal ?? '—'}</span>
-					<span class="gcp-kpi-label">Marginal</span>
-					<span class="gcp-kpi-sub">avg ${marketStats.avgMarginal ?? '—'} · peak ${marketStats.peakMarginal ?? '—'}</span>
-				</div>
-				<div class="gcp-kpi-divider"></div>
-				<div class="gcp-kpi">
-					<span class="gcp-kpi-value">{marketStats.currentLoad}<span class="gcp-kpi-unit"> MW</span></span>
-					<span class="gcp-kpi-label">Load</span>
-					<span class="gcp-kpi-sub">of {marketStats.totalCapacity} MW capacity</span>
-				</div>
-				<div class="gcp-kpi-divider"></div>
+				{@render kpiPair('')}
 				<div class="gcp-kpi">
 					<span class="gcp-kpi-value">{game.state.connectedClients?.length ?? 0}<span class="gcp-kpi-unit"> / {Object.keys(game.state.players).length}</span></span>
 					<span class="gcp-kpi-label">Online</span>
-					<span class="gcp-kpi-sub">{game.state.options?.payment_method === 'pay_as_offered' ? 'PAO' : 'LAO'} · {game.state.options?.auto_advance_time ?? '—'}s timer</span>
+					<span class="gcp-kpi-sub">{paymentLabel(game.state.options?.payment_method)} · {game.state.options?.auto_advance_time ?? '—'}s timer</span>
 				</div>
 			</div>
 
@@ -271,22 +280,11 @@
 
 			<!-- Final KPI strip -->
 			<div class="gcp-kpi-strip">
-				<div class="gcp-kpi">
-					<span class="gcp-kpi-value">${marketStats.currentMarginal ?? '—'}</span>
-					<span class="gcp-kpi-label">Final Marginal</span>
-					<span class="gcp-kpi-sub">avg ${marketStats.avgMarginal ?? '—'} · peak ${marketStats.peakMarginal ?? '—'}</span>
-				</div>
-				<div class="gcp-kpi-divider"></div>
-				<div class="gcp-kpi">
-					<span class="gcp-kpi-value">{marketStats.currentLoad}<span class="gcp-kpi-unit"> MW</span></span>
-					<span class="gcp-kpi-label">Final Load</span>
-					<span class="gcp-kpi-sub">of {marketStats.totalCapacity} MW capacity</span>
-				</div>
-				<div class="gcp-kpi-divider"></div>
+				{@render kpiPair('Final ')}
 				<div class="gcp-kpi">
 					<span class="gcp-kpi-value">{Object.keys(game.state.players).length}</span>
 					<span class="gcp-kpi-label">Players</span>
-					<span class="gcp-kpi-sub">{game.state.options?.payment_method === 'pay_as_offered' ? 'PAO' : 'LAO'} mode</span>
+					<span class="gcp-kpi-sub">{paymentLabel(game.state.options?.payment_method)} mode</span>
 				</div>
 			</div>
 		{/if}
