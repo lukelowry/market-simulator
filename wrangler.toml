@@ -1,0 +1,26 @@
+name = "market-simulator"
+main = "worker-entry.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_als"]
+workers_dev = true
+preview_urls = true
+
+[assets]
+directory = ".svelte-kit/cloudflare"
+binding = "ASSETS"
+
+[[durable_objects.bindings]]
+name = "MARKET_ROOM"
+class_name = "MarketRoom"
+
+[[durable_objects.bindings]]
+name = "MARKET_REGISTRY"
+class_name = "MarketRegistry"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MarketRoom"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["MarketRegistry"]

@@ -1,0 +1,392 @@
+@import "tailwindcss";
+
+/* ==========================================================
+   TAMU Energy Market Simulator — Design System (Tailwind v4)
+   ========================================================== */
+
+@theme {
+	/* Palette */
+	--color-maroon: #500000;
+	--color-maroon-dark: #3c0000;
+	--color-maroon-light: #7a2020;
+	--color-maroon-faint: rgba(80, 0, 0, 0.05);
+
+	--color-gold: #c89b3c;
+	--color-gold-light: #dfc07a;
+	--color-gold-faint: rgba(200, 155, 60, 0.1);
+
+	--color-cream: #f7f4ef;
+	--color-cream-dark: #ede8e0;
+
+	--color-text-primary: #2d2a26;
+	--color-text-secondary: #5e5953;
+	--color-text-muted: #908a83;
+	--color-text-inverse: #f5f2ed;
+
+	--color-border: #ddd8d0;
+	--color-border-light: #eae6e0;
+
+	--color-success: #2d8a4e;
+	--color-success-bg: rgba(45, 138, 78, 0.08);
+	--color-warning: #b87d0a;
+	--color-warning-bg: rgba(184, 125, 10, 0.08);
+	--color-danger: #c44536;
+	--color-danger-bg: rgba(196, 69, 54, 0.08);
+	--color-info: #4a7c8a;
+	--color-info-bg: rgba(74, 124, 138, 0.08);
+
+	/* Typography */
+	--font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+	--font-body: 'Source Sans 3', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	--font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+
+	/* Override: design system uses 2.5rem, Tailwind default is 2.25rem */
+	--text-4xl: 2.5rem;
+	--text-4xl--line-height: 1.2;
+
+	/* Border Radius (all custom) */
+	--radius-sm: 6px;
+	--radius: 10px;
+	--radius-lg: 14px;
+	--radius-xl: 20px;
+
+	/* Shadows */
+	--shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+	--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+	--shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+	--shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+	--shadow-maroon: 0 4px 20px rgba(80, 0, 0, 0.15);
+
+	/* Custom letter-spacing */
+	--tracking-brand: 0.06em;
+	--tracking-section: 0.08em;
+
+	/* Custom easing */
+	--ease-brand: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Transition durations (referenced by shorthand in component classes) */
+:root {
+	--duration-fast: 150ms;
+	--duration: 200ms;
+	--duration-slow: 350ms;
+}
+
+/* ----- Base ----- */
+@layer base {
+	html {
+		font-size: 16px;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		scroll-behavior: smooth;
+	}
+
+	body {
+		@apply font-body text-base leading-normal text-text-primary bg-cream min-h-screen;
+	}
+
+	h1, h2, h3, h4, h5, h6 {
+		@apply font-display font-semibold leading-tight text-text-primary;
+	}
+
+	h1 { @apply text-4xl; }
+	h2 { @apply text-3xl; }
+	h3 { @apply text-2xl; }
+	h4 { @apply text-xl; }
+	h5 { @apply text-lg; }
+
+	p { @apply mb-4; }
+	p:last-child { @apply mb-0; }
+
+	a {
+		@apply text-maroon no-underline;
+		transition: color var(--duration) var(--ease-brand);
+	}
+	a:hover { @apply text-maroon-light; }
+
+	:focus-visible {
+		@apply outline-3 outline-gold outline-offset-2;
+	}
+
+	::selection {
+		background: rgba(80, 0, 0, 0.15);
+		@apply text-text-primary;
+	}
+}
+
+/* ----- Layout ----- */
+.container {
+	@apply max-w-[1280px] mx-auto px-6;
+}
+
+.layout-sidebar {
+	@apply grid grid-cols-[280px_1fr] gap-8 items-start;
+}
+
+@media (max-width: 768px) {
+	.layout-sidebar {
+		@apply grid-cols-1;
+	}
+}
+
+/* ----- Card ----- */
+.card {
+	@apply bg-white border border-border-light rounded-lg shadow-sm overflow-hidden;
+	transition: box-shadow var(--duration) var(--ease-brand);
+}
+
+.card-header {
+	@apply py-3 px-5 border-b border-border-light bg-maroon-faint font-body font-semibold text-xs uppercase tracking-brand text-maroon;
+}
+
+.card-body {
+	@apply p-5;
+}
+
+/* ----- Buttons ----- */
+.btn {
+	@apply inline-flex items-center justify-center gap-2 py-2 px-5 font-body text-sm font-semibold leading-normal border-2 border-transparent rounded cursor-pointer no-underline whitespace-nowrap;
+	transition: all var(--duration) var(--ease-brand);
+}
+
+.btn:focus-visible {
+	@apply outline-3 outline-gold outline-offset-2;
+}
+
+.btn-primary {
+	@apply bg-maroon text-text-inverse border-maroon;
+}
+.btn-primary:hover {
+	@apply bg-maroon-dark border-maroon-dark shadow-maroon;
+}
+
+.btn-secondary {
+	@apply bg-transparent text-text-secondary border-border;
+}
+.btn-secondary:hover {
+	@apply bg-maroon-faint text-maroon border-maroon;
+}
+
+.btn-success {
+	@apply bg-success text-white border-success;
+}
+.btn-success:hover {
+	background: #247a42;
+	box-shadow: 0 4px 12px rgba(45, 138, 78, 0.25);
+}
+
+.btn-warning {
+	@apply bg-warning text-white border-warning;
+}
+.btn-warning:hover {
+	background: #a06e08;
+}
+
+.btn-danger {
+	@apply bg-transparent text-danger border-danger;
+}
+.btn-danger:hover {
+	@apply bg-danger text-white;
+}
+
+.btn-sm {
+	@apply py-1 px-3 text-xs rounded-sm;
+}
+
+.btn-block {
+	@apply w-full;
+}
+
+/* ----- Form Controls ----- */
+.form-group {
+	@apply mb-5;
+}
+
+.form-label {
+	@apply block text-sm font-semibold text-text-secondary mb-2;
+	letter-spacing: 0.01em;
+}
+
+.form-input,
+.form-select {
+	@apply block w-full py-3 px-4 font-body text-base leading-normal text-text-primary bg-white rounded;
+	border: 1.5px solid var(--color-border);
+	transition: border-color var(--duration) var(--ease-brand), box-shadow var(--duration) var(--ease-brand);
+}
+
+.form-input:focus,
+.form-select:focus {
+	@apply outline-none;
+	border-color: var(--color-maroon);
+	box-shadow: 0 0 0 3px rgba(80, 0, 0, 0.1);
+}
+
+.form-input::placeholder {
+	@apply text-text-muted;
+}
+
+.form-input[readonly] {
+	@apply bg-cream text-text-secondary;
+}
+
+.form-select {
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235e5953' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 1rem center;
+	@apply pr-10;
+}
+
+/* ----- Toggle Switch ----- */
+.toggle {
+	@apply flex items-center gap-3 cursor-pointer;
+}
+
+.toggle input[type='checkbox'] {
+	appearance: none;
+	width: 44px;
+	height: 24px;
+	@apply bg-border rounded-full relative cursor-pointer shrink-0;
+	transition: background var(--duration) var(--ease-brand);
+}
+
+.toggle input[type='checkbox']::after {
+	content: '';
+	@apply absolute top-[2px] left-[2px] w-5 h-5 bg-white rounded-full shadow-xs;
+	transition: transform var(--duration) var(--ease-brand);
+}
+
+.toggle input[type='checkbox']:checked {
+	@apply bg-maroon;
+}
+
+.toggle input[type='checkbox']:checked::after {
+	transform: translateX(20px);
+}
+
+.toggle input[type='checkbox']:focus-visible {
+	@apply outline-3 outline-gold outline-offset-2;
+}
+
+.toggle-label {
+	@apply text-sm font-medium text-text-secondary;
+}
+
+/* ----- Tables ----- */
+.table-wrap {
+	@apply overflow-x-auto rounded-lg border border-border-light shadow-xs;
+}
+
+table {
+	@apply w-full text-sm;
+	border-collapse: collapse;
+}
+
+thead {
+	@apply bg-maroon text-text-inverse;
+}
+
+thead th {
+	@apply py-3 px-4 font-body font-semibold text-xs uppercase tracking-brand text-left whitespace-nowrap;
+}
+
+tbody tr {
+	@apply border-b border-border-light;
+	transition: background var(--duration-fast) var(--ease-brand);
+}
+
+tbody tr:last-child {
+	@apply border-b-0;
+}
+
+tbody tr:nth-child(even) {
+	@apply bg-maroon-faint;
+}
+
+tbody tr:hover {
+	@apply bg-gold-faint;
+}
+
+tbody td {
+	@apply py-3 px-4 font-mono text-sm;
+}
+
+/* ----- Badges ----- */
+.badge {
+	@apply inline-flex items-center py-1 px-3 font-body text-xs font-semibold rounded-full uppercase whitespace-nowrap;
+	letter-spacing: 0.03em;
+}
+
+.badge-success { @apply bg-success-bg text-success; }
+.badge-warning { @apply bg-warning-bg text-warning; }
+.badge-info { @apply bg-info-bg text-info; }
+.badge-maroon { @apply bg-maroon text-text-inverse; }
+.badge-muted { @apply bg-cream-dark text-text-muted; }
+
+/* ----- Callouts ----- */
+.callout {
+	@apply py-4 px-5 rounded border-l-4 text-sm;
+}
+
+.callout-success {
+	@apply bg-success-bg border-success;
+	color: #1a5e34;
+}
+.callout-warning {
+	@apply bg-warning-bg border-warning;
+	color: #7a5206;
+}
+
+/* ----- Animations ----- */
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.5; }
+}
+
+.animate-in {
+	animation: fadeIn var(--duration-slow) var(--ease-brand) backwards;
+}
+
+.stagger > * {
+	animation: fadeIn var(--duration-slow) var(--ease-brand) backwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+
+/* ----- Scrollbar ----- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { @apply bg-cream; }
+::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-text-muted; }
+
+/* ----- Modal Overlays ----- */
+.modal-overlay {
+	@apply fixed inset-0 flex items-center justify-center p-4;
+	z-index: 10000;
+}
+
+.modal-backdrop {
+	@apply absolute inset-0;
+	z-index: 0;
+	background: rgba(0, 0, 0, 0.4);
+	backdrop-filter: blur(4px);
+}
+
+.modal-card {
+	@apply relative bg-white border border-border-light rounded-lg shadow-lg;
+	z-index: 1;
+}
+
+/* ----- Accessibility ----- */
+.sr-only {
+	@apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+	clip: rect(0, 0, 0, 0);
+}
