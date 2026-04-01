@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { game } from '$lib/stores/gameStore.svelte.js';
 	import { send } from '$lib/services/websocket.js';
+	import { focusTrap } from '$lib/utils/focusTrap.js';
 	import ConfirmModal from '$lib/components/shared/ConfirmModal.svelte';
 
 	let { playerId, onclose }: { playerId: string; onclose: () => void } = $props();
@@ -53,7 +54,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- svelte-ignore a11y_interactive_supports_focus -->
-<div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Player details" onkeydown={handleKeydown} tabindex="-1">
+<div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Player details" onkeydown={handleKeydown} tabindex="-1" use:focusTrap>
 	<div class="modal-backdrop" onclick={onclose} role="presentation"></div>
 	<div class="modal-card animate-in detail-modal">
 		<!-- Sticky header -->

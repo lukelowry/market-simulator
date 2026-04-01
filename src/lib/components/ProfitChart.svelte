@@ -5,6 +5,8 @@
 	import { CHART_MAROON, CHART_MAROON_LIGHT, CHART_GOLD, CHART_GOLD_LIGHT, CHART_INFO, CHART_TEXT_SECONDARY, CHART_TEXT_MUTED, CHART_TOOLTIP_BG } from '$lib/utils/chartTheme.js';
 	import {
 		Chart,
+		BarController,
+		BarElement,
 		LineController,
 		LineElement,
 		PointElement,
@@ -16,6 +18,8 @@
 	} from 'chart.js';
 
 	Chart.register(
+		BarController,
+		BarElement,
 		LineController,
 		LineElement,
 		PointElement,
@@ -37,6 +41,18 @@
 				labels: [],
 				datasets: [
 					{
+						type: 'bar' as const,
+						label: 'Load (MW)',
+						data: [],
+						backgroundColor: 'rgba(74, 124, 138, 0.12)',
+						borderColor: CHART_INFO,
+						borderWidth: 1,
+						borderRadius: 3,
+						borderSkipped: false,
+						yAxisID: 'y2',
+						order: 3
+					},
+					{
 						label: 'Revenue',
 						data: [],
 						borderColor: CHART_GOLD,
@@ -49,7 +65,8 @@
 						pointBorderWidth: 2,
 						pointHoverRadius: 6,
 						fill: true,
-						yAxisID: 'y'
+						yAxisID: 'y',
+						order: 2
 					},
 					{
 						label: 'Profit',
@@ -64,7 +81,8 @@
 						pointBorderWidth: 2,
 						pointHoverRadius: 6,
 						fill: true,
-						yAxisID: 'y'
+						yAxisID: 'y',
+						order: 1
 					},
 					{
 						label: 'Marginal Price',
@@ -80,7 +98,8 @@
 						pointBorderWidth: 1.5,
 						pointHoverRadius: 5,
 						fill: false,
-						yAxisID: 'y1'
+						yAxisID: 'y1',
+						order: 0
 					}
 				]
 			},
@@ -112,6 +131,9 @@
 						callbacks: {
 							label: function (context) {
 								const val = context.parsed.y;
+								if (context.dataset.label === 'Load (MW)') {
+									return `${context.dataset.label}: ${val} MW`;
+								}
 								if (context.dataset.label === 'Marginal Price') {
 									return `${context.dataset.label}: $${val}/MWh`;
 								}
@@ -167,6 +189,11 @@
 							display: false
 						}
 					},
+					y2: {
+						type: 'linear',
+						display: false,
+						beginAtZero: true
+					},
 					x: {
 						title: {
 							display: true,
@@ -203,6 +230,7 @@
 		if (!name) return;
 		const gs = game.state;
 
+		const load: (number | null)[] = [];
 		const revenue: (number | null)[] = [];
 		const profit: (number | null)[] = [];
 		const marginalPrice: (number | null)[] = [];
@@ -212,6 +240,7 @@
 		for (const period of cleared) {
 			labels.push(period.number);
 			const pp = period.players[name];
+			load.push(period.load);
 			revenue.push(pp?.revenue ?? null);
 			profit.push(pp?.profit ?? null);
 			marginalPrice.push(period.marginal_cost ?? null);
@@ -220,9 +249,10 @@
 		hasData = labels.length > 0;
 
 		chart.data.labels = labels;
-		chart.data.datasets[0].data = revenue;
-		chart.data.datasets[1].data = profit;
-		chart.data.datasets[2].data = marginalPrice;
+		chart.data.datasets[0].data = load;
+		chart.data.datasets[1].data = revenue;
+		chart.data.datasets[2].data = profit;
+		chart.data.datasets[3].data = marginalPrice;
 		chart.update();
 	});
 </script>
@@ -240,8 +270,27 @@
 			</div>
 		{/if}
 		<div style:display={hasData ? 'block' : 'none'}>
-			<canvas bind:this={canvas} aria-label="Line chart showing revenue, profit, and marginal price per period"
-			></canvas>
+			<canvas bind:this={canvas} aria-label="Line chart showing revenue, profit, and marginal price per period"></canvas>
 		</div>
+		{#if hasData}
+			<table class="sr-only">
+				<caption>Revenue, Profit, Load & Marginal Price per Period</caption>
+				<thead>
+					<tr><th>Period</th><th>Load (MW)</th><th>Revenue ($)</th><th>Profit ($)</th><th>Marginal Price ($/MWh)</th></tr>
+				</thead>
+				<tbody>
+					{#each game.state.periods as period}
+						{@const pp = period.players[connection.participantName]}
+						<tr>
+							<td>{period.number}</td>
+							<td>{period.load}</td>
+							<td>{pp?.revenue ?? '—'}</td>
+							<td>{pp?.profit ?? '—'}</td>
+							<td>{period.marginal_cost ?? '—'}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		{/if}
 	</div>
 </section>

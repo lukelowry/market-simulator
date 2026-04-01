@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { focusTrap } from '$lib/utils/focusTrap.js';
 	import type { GameOptions, PaymentMethod } from '$lib/types/game.js';
 
 	let {
@@ -80,7 +81,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- svelte-ignore a11y_interactive_supports_focus -->
-<div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Create New Market" onkeydown={handleKeydown} tabindex="-1">
+<div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Create New Market" onkeydown={handleKeydown} tabindex="-1" use:focusTrap>
 	<div class="modal-backdrop" onclick={onclose} role="presentation"></div>
 	<div class="modal-card animate-in create-modal">
 		<!-- Sticky header -->

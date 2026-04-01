@@ -17,7 +17,7 @@ export type ClientMessage =
 	| { type: 'advancePeriod' }                             // admin: manually trigger next period
 	| { type: 'setAutoAdvance'; payload: { enabled: boolean } } // admin: toggle auto-advance timer
 	| { type: 'setVisibility'; payload: { visibility: Visibility } } // admin: toggle public/unlisted
-	| { type: 'submitOffers'; payload: { offers: Record<string, number> } } // participant: gen id → offer price
+	| { type: 'submitOffers'; payload: { offers: Record<string, number>; period: number } } // participant: gen id → offer price (period prevents stale cross-period submissions)
 	| { type: 'resetGame' }                                 // admin: reset to uninitialized (blocked while running)
 	| { type: 'kickPlayer'; payload: { playerId: string } } // admin: permanently ban player (forming/full only)
 	| { type: 'rewardPlayer'; payload: { playerId: string; amount: number } }; // admin: adjust player balance (±999999)

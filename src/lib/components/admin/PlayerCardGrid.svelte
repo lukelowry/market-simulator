@@ -6,11 +6,9 @@
 	const isRunningOrCompleted = $derived(game.isActive);
 
 	const offerStatus = $derived.by(() => {
-		const result: Record<string, 'submitted' | 'pending' | 'none'> = {};
+		const result: Record<string, 'submitted' | 'pending'> = {};
 		for (const [key, player] of Object.entries(game.state.players)) {
-			if (player.last_offer_time === 0) result[key] = 'none';
-			else if (player.last_offer_time > game.state.last_advance_time) result[key] = 'submitted';
-			else result[key] = 'pending';
+			result[key] = player.last_offer_time > game.state.last_advance_time ? 'submitted' : 'pending';
 		}
 		return result;
 	});
@@ -70,8 +68,8 @@
 							${player.money.toLocaleString()}
 						</span>
 						<div class="flex justify-between items-center gap-2">
-							<span class="badge" class:badge-success={offerStatus[player.key] === 'submitted'} class:badge-warning={offerStatus[player.key] === 'pending'} class:badge-muted={offerStatus[player.key] === 'none'}>
-								{offerStatus[player.key] === 'submitted' ? 'Submitted' : offerStatus[player.key] === 'pending' ? 'Stale' : 'None'}
+							<span class="badge" class:badge-success={offerStatus[player.key] === 'submitted'} class:badge-warning={offerStatus[player.key] === 'pending'}>
+								{offerStatus[player.key] === 'submitted' ? 'Submitted' : 'Pending'}
 							</span>
 							{#if sparkData.length >= 2}
 								<svg class="shrink-0" width="60" height="24" viewBox="0 0 60 24" aria-hidden="true">

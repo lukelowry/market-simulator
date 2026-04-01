@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { MarketStorageInfo } from '$lib/types/messages.js';
 	import { stateBadge, stateAbbr } from '$lib/utils/stateLabels.js';
+	import { focusTrap } from '$lib/utils/focusTrap.js';
 	import ConfirmModal from '$lib/components/shared/ConfirmModal.svelte';
 
 	import { untrack } from 'svelte';
@@ -124,7 +125,7 @@
 {#if isOpen}
 	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<!-- svelte-ignore a11y_interactive_supports_focus -->
-	<div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Storage Management" onkeydown={handleKeydown} tabindex="-1">
+	<div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Storage Management" onkeydown={handleKeydown} tabindex="-1" use:focusTrap>
 		<div class="modal-backdrop" onclick={close} role="presentation"></div>
 		<div class="modal-card animate-in storage-modal">
 			<!-- Sticky header -->

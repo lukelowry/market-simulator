@@ -67,6 +67,7 @@
 		<div class="period-log">
 			<div class="log-header">
 				<span>Per</span>
+				<span>Load</span>
 				<span>Price</span>
 				<span class="text-right">Profit</span>
 			</div>
@@ -75,6 +76,7 @@
 				{@const profit = rawProfit != null ? Math.round(rawProfit) : null}
 				<div class="log-row">
 					<span class="text-text-muted">{period.number}</span>
+					<span>{period.load} MW</span>
 					<span>${period.marginal_cost != null ? Math.round(period.marginal_cost) : '—'}</span>
 					<span class="text-right"
 						class:text-success={profit !== null && profit > 0}
@@ -118,7 +120,7 @@
 
 	.log-header {
 		display: grid;
-		grid-template-columns: 36px 1fr 1fr;
+		grid-template-columns: 36px 1fr 1fr 1fr;
 		gap: 4px;
 		padding: 6px 20px;
 		font-family: var(--font-body);
@@ -135,7 +137,7 @@
 
 	.log-row {
 		display: grid;
-		grid-template-columns: 36px 1fr 1fr;
+		grid-template-columns: 36px 1fr 1fr 1fr;
 		gap: 4px;
 		padding: 5px 20px;
 		font-family: var(--font-mono);

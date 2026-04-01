@@ -81,7 +81,12 @@
 		font-size: 16px;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
-		scroll-behavior: smooth;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		html {
+			scroll-behavior: smooth;
+		}
 	}
 
 	body {
@@ -393,4 +398,14 @@ tbody td {
 .sr-only {
 	@apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
 	clip: rect(0, 0, 0, 0);
+}
+
+/* ----- Reduced Motion ----- */
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }

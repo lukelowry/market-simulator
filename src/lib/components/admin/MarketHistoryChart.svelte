@@ -192,5 +192,22 @@
 				<p class="text-sm text-text-muted max-w-[320px] m-0">Price and load trends will appear as periods clear.</p>
 			</div>
 		{/if}
+		{#if hasData}
+			<table class="sr-only">
+				<caption>Market History: Load and Clearing Price per Period</caption>
+				<thead>
+					<tr><th>Period</th><th>Load (MW)</th><th>Clearing Price ($/MWh)</th></tr>
+				</thead>
+				<tbody>
+					{#each game.state.periods.filter(p => p.marginal_cost !== null) as period}
+						<tr>
+							<td>{period.number}</td>
+							<td>{period.load}</td>
+							<td>{period.marginal_cost}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		{/if}
 	</div>
 </section>

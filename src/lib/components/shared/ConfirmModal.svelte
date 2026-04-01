@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { focusTrap } from '$lib/utils/focusTrap.js';
 
 	let {
 		title,
@@ -30,7 +31,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- svelte-ignore a11y_interactive_supports_focus -->
-<div class="modal-overlay" role="dialog" aria-modal="true" aria-label={title} onkeydown={handleKeydown} tabindex="-1" bind:this={overlayEl}>
+<div class="modal-overlay" role="dialog" aria-modal="true" aria-label={title} onkeydown={handleKeydown} tabindex="-1" bind:this={overlayEl} use:focusTrap>
 	<div class="modal-backdrop" onclick={oncancel} role="presentation"></div>
 	<div class="modal-card animate-in confirm-modal">
 		<div class="confirm-body">

@@ -467,7 +467,7 @@ export class MarketRoom extends DurableObject<Env> {
 				if (role === 'admin' && p) return setVisibility(this.game, p.visibility);
 				return false;
 			case 'submitOffers':
-				if (role === 'participant' && p) return submitOffers(this.game, name, p.offers);
+				if (role === 'participant' && p) return submitOffers(this.game, name, p.offers, p.period);
 				return false;
 			case 'resetGame':
 				if (role === 'admin') return await this.handleResetGame();

@@ -48,7 +48,7 @@
 	);
 
 	function submitOffers() {
-		// Debounce rapid clicks — queue the latest, send after 500ms of quiet
+		// Debounce rapid clicks — queue the latest, send after 250ms of quiet
 		submitPending = true;
 		if (submitDebounce) clearTimeout(submitDebounce);
 		submitDebounce = setTimeout(() => {
@@ -64,15 +64,16 @@
 					offerValues[genId] = String(clamped);
 				}
 			}
-			send({ type: 'submitOffers', payload: { offers } });
+			const sent = send({ type: 'submitOffers', payload: { offers, period: game.state.period } });
 
-			// Show transient toast
-			showSubmitToast = true;
-			if (toastTimeout) clearTimeout(toastTimeout);
-			toastTimeout = setTimeout(() => {
-				showSubmitToast = false;
-			}, 2500);
-		}, 500);
+			if (sent) {
+				showSubmitToast = true;
+				if (toastTimeout) clearTimeout(toastTimeout);
+				toastTimeout = setTimeout(() => {
+					showSubmitToast = false;
+				}, 2500);
+			}
+		}, 250);
 	}
 
 	const isParticipantRunning = $derived(connection.role === 'participant' && game.state.state === 'running');
@@ -85,14 +86,20 @@
 			<button
 				type="button"
 				class="btn btn-sm py-1 px-4"
-				class:btn-primary={!hasSubmittedThisPeriod}
-				class:btn-success={hasSubmittedThisPeriod}
+				class:btn-primary={!hasSubmittedThisPeriod && !submitPending}
+				class:btn-success={hasSubmittedThisPeriod && !submitPending}
+				class:btn-secondary={submitPending}
 				onclick={submitOffers}
+				disabled={submitPending}
 			>
-				<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-					<path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
-				</svg>
-				{hasSubmittedThisPeriod ? 'Update Offers' : 'Submit Offers'}
+				{#if submitPending}
+					Sending...
+				{:else}
+					<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+						<path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+					</svg>
+					{hasSubmittedThisPeriod ? 'Update Offers' : 'Submit Offers'}
+				{/if}
 			</button>
 		{/if}
 	</div>

@@ -53,8 +53,10 @@ export function setVisibility(game: GameState, visibility: string): boolean {
 	return true;
 }
 
-export function submitOffers(game: GameState, playerName: string, offers: Record<string, number>): boolean {
+export function submitOffers(game: GameState, playerName: string, offers: Record<string, number>, forPeriod?: number): boolean {
 	if (game.state !== 'running') return false;
+	// Reject stale offers from a previous period (debounce can race with auto-advance)
+	if (forPeriod !== undefined && forPeriod !== game.period) return false;
 	const maxOffer = game.options?.max_offer_price ?? 200;
 
 	for (const [genId, offerValue] of Object.entries(offers)) {

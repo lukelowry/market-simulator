@@ -4,7 +4,7 @@
 	import { createCountdown } from '$lib/utils/countdown.svelte.js';
 
 	const myPlayer = $derived(game.state.players[connection.participantName] ?? null);
-	const totalPlayers = $derived(Object.keys(game.state.players).length);
+	const totalPlayers = $derived(game.state.nplayers);
 	const isActive = $derived(game.isActive);
 	const hasSubmittedThisPeriod = $derived(
 		myPlayer !== null && myPlayer.last_offer_time > game.state.last_advance_time
@@ -14,6 +14,15 @@
 	const countdownSeconds = $derived(countdown.active ? countdown.seconds : null);
 
 	const shouldCountdown = $derived(game.state.state === 'running' && game.state.auto_advance);
+
+	/** Last cleared period's load (MW). */
+	const lastLoad = $derived.by(() => {
+		const ps = game.state.periods;
+		return ps.length > 0 ? ps[ps.length - 1].load : null;
+	});
+
+	/** Next period's forecasted load (MW). Sent by server to participants. */
+	const nextLoad = $derived(game.state.nextLoad ?? null);
 
 	$effect(() => {
 		if (shouldCountdown) {
@@ -86,6 +95,20 @@
 						<span class="badge badge-warning">Pending</span>
 					{/if}
 				</div>
+			{/if}
+			{#if isActive && (lastLoad !== null || nextLoad !== null)}
+				<div class="sb-row">
+					<span class="sb-label">Load</span>
+					<span class="font-mono font-medium text-text-primary">
+						{lastLoad !== null ? `${lastLoad} MW` : '—'}
+					</span>
+				</div>
+				{#if nextLoad !== null && game.state.state === 'running'}
+					<div class="sb-row">
+						<span class="sb-label">Next Load</span>
+						<span class="font-mono font-medium text-info">{nextLoad} MW</span>
+					</div>
+				{/if}
 			{/if}
 		</div>
 	</div>
