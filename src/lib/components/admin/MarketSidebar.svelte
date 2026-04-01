@@ -109,7 +109,7 @@
 <aside class="sticky top-8 flex flex-col gap-4 max-h-[calc(100vh-140px)]">
 	<div class="flex justify-between items-center">
 		<h4 class="m-0 text-lg">Markets</h4>
-		<button class="flex items-center gap-1 text-xs text-text-muted hover:text-maroon transition-colors duration-100" onclick={() => fetchMarkets()} aria-label="Refresh market list">
+		<button class="flex items-center gap-1 text-xs text-text-muted hover:text-maroon transition-colors duration-100 p-1.5 -mr-1.5 rounded-sm" onclick={() => fetchMarkets()} aria-label="Refresh market list">
 			<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg>
 		</button>
 	</div>
@@ -128,7 +128,7 @@
 			>
 				<div class="flex justify-between items-center gap-2 mb-0.5">
 					<span class="font-semibold text-sm text-text-primary truncate">{market.name}</span>
-					<span class="badge py-[1px] px-2 text-[10px] {stateBadge(market.state)}">{stateAbbr(market.state)}</span>
+					<span class="badge py-[1px] px-2 text-[11px] {stateBadge(market.state)}">{stateAbbr(market.state)}</span>
 				</div>
 				<div class="text-xs text-text-muted font-mono mb-2">
 					<span>{market.playerCount} player{market.playerCount !== 1 ? 's' : ''}</span>
@@ -139,7 +139,7 @@
 				<div class="flex gap-2 border-t border-border-light pt-2">
 					<button
 						type="button"
-						class="flex items-center justify-center w-7 h-6 rounded-sm cursor-pointer transition-all duration-100 ease-brand hover:bg-maroon-faint hover:text-maroon border-none bg-transparent p-0 {visibility === 'public' ? 'text-maroon' : 'text-text-muted'}"
+						class="flex items-center justify-center w-8 h-8 rounded-sm cursor-pointer transition-all duration-100 ease-brand hover:bg-maroon-faint hover:text-maroon border-none bg-transparent p-0 {visibility === 'public' ? 'text-maroon' : 'text-text-muted'}"
 						title={visibility === 'public' ? 'Public (visible to players)' : 'Unlisted (link-only)'}
 						aria-label="Toggle visibility"
 						onclick={(e: MouseEvent) => { e.stopPropagation(); toggleVisibility(market.name, e); }}

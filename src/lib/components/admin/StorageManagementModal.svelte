@@ -143,14 +143,14 @@
 			<div class="storage-body">
 			<!-- Overview -->
 			<div class="px-6 pt-5 pb-1">
-				<h4 class="text-[10px] font-bold uppercase tracking-section text-text-muted m-0 mb-3">Overview</h4>
+				<h4 class="text-[11px] font-bold uppercase tracking-section text-text-muted m-0 mb-3">Overview</h4>
 				<div class="grid grid-cols-3 gap-3 mb-4">
 					<div class="flex flex-col gap-0.5 py-2.5 px-3 bg-cream rounded border border-border-light">
-						<span class="text-[10px] font-semibold uppercase tracking-brand text-text-muted">Markets</span>
+						<span class="text-[11px] font-semibold uppercase tracking-brand text-text-muted">Markets</span>
 						<span class="font-mono text-sm font-bold text-text-primary">{loading ? '...' : marketInfos.length}</span>
 					</div>
 					<div class="flex flex-col gap-0.5 py-2.5 px-3 bg-cream rounded border border-border-light">
-						<span class="text-[10px] font-semibold uppercase tracking-brand text-text-muted">Est. Storage</span>
+						<span class="text-[11px] font-semibold uppercase tracking-brand text-text-muted">Est. Storage</span>
 						<span class="font-mono text-sm font-bold text-text-primary">{loading ? '...' : formatBytes(totalBytes)}</span>
 					</div>
 					<div class="flex flex-col items-center justify-center py-2.5 px-3 bg-cream rounded border border-border-light">
@@ -175,7 +175,7 @@
 
 			<!-- Registered Markets Table -->
 			<div class="px-6 pt-2 pb-4">
-				<h4 class="text-[10px] font-bold uppercase tracking-section text-text-muted m-0 mb-3">Registered Markets</h4>
+				<h4 class="text-[11px] font-bold uppercase tracking-section text-text-muted m-0 mb-3">Registered Markets</h4>
 
 				{#if loading}
 					<div class="flex items-center justify-center py-8 text-text-muted text-sm gap-2" role="status">
@@ -206,9 +206,9 @@
 										<td class="font-semibold font-body text-text-primary">{market.name}</td>
 										<td>
 											{#if market.error}
-												<span class="badge py-[1px] px-2 text-[10px] badge-danger" title={market.error}>ERR</span>
+												<span class="badge py-[1px] px-2 text-[11px] badge-danger" title={market.error}>ERR</span>
 											{:else}
-												<span class="badge py-[1px] px-2 text-[10px] {stateBadgeClass(market.state)}">
+												<span class="badge py-[1px] px-2 text-[11px] {stateBadgeClass(market.state)}">
 													{stateAbbr(market.state)}
 												</span>
 											{/if}
@@ -234,7 +234,7 @@
 
 			<!-- Probe Orphaned DO -->
 			<div class="px-6 pt-2 pb-5 border-t border-border-light">
-				<h4 class="text-[10px] font-bold uppercase tracking-section text-text-muted m-0 mb-2 mt-4">Probe by Name</h4>
+				<h4 class="text-[11px] font-bold uppercase tracking-section text-text-muted m-0 mb-2 mt-4">Probe by Name</h4>
 				<p class="text-xs text-text-muted m-0 mb-3">Check if a Durable Object exists for a market name not in the registry (orphaned data).</p>
 				<div class="flex gap-2 mb-3">
 					<input
@@ -263,7 +263,7 @@
 							<div class="flex items-center justify-between gap-3">
 								<div>
 									<span class="text-sm font-semibold text-text-primary">{probeResult.name}</span>
-									<span class="badge py-[1px] px-2 text-[10px] ml-2 {stateBadgeClass(probeResult.state)}">
+									<span class="badge py-[1px] px-2 text-[11px] ml-2 {stateBadgeClass(probeResult.state)}">
 										{stateAbbr(probeResult.state)}
 									</span>
 									<div class="text-xs text-text-muted mt-1">

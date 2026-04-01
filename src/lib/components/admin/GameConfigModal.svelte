@@ -171,7 +171,7 @@
 		<!-- Sticky footer -->
 		<div class="create-footer">
 			<div class="flex flex-row min-[441px]:flex-col items-baseline min-[441px]:items-start gap-2 min-[441px]:gap-[1px]">
-				<span class="text-[10px] font-semibold uppercase tracking-brand text-text-muted">Est. Duration</span>
+				<span class="text-[11px] font-semibold uppercase tracking-brand text-text-muted">Est. Duration</span>
 				<span class="font-display text-lg font-bold text-maroon">{estimatedDuration}</span>
 			</div>
 			<div class="flex gap-3 items-center justify-end">

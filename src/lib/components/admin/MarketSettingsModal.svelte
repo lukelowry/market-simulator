@@ -202,7 +202,7 @@
 										aria-pressed={game.state.options?.gen_preset === preset}
 									>
 										<span class="font-bold text-xs">{preset === 'standard' ? 'Standard' : preset === 'simple' ? 'Simple' : 'Competitive'}</span>
-										<span class="text-[10px] text-text-muted font-mono">{preset === 'standard' ? '5 gens' : preset === 'simple' ? '3 gens' : '7 gens'}</span>
+										<span class="text-[11px] text-text-muted font-mono">{preset === 'standard' ? '5 gens' : preset === 'simple' ? '3 gens' : '7 gens'}</span>
 									</button>
 								{/each}
 							</div>
@@ -229,7 +229,7 @@
 										value={game.state.options?.scarcity_price ?? 0}
 										onchange={(e) => handleNumberChange('scarcity_price', e)}
 										aria-describedby="ms-scarcity-hint" />
-									<span class="text-[10px] text-text-muted mt-0.5 block" id="ms-scarcity-hint">0 = disabled</span>
+									<span class="text-[11px] text-text-muted mt-0.5 block" id="ms-scarcity-hint">0 = disabled</span>
 								</div>
 								<div>
 									<label class="edit-label" for="ms-jitter" title="Random +/- variation applied to each period's load. 0 = exact profile.">Load Jitter (%)</label>
@@ -237,7 +237,7 @@
 										value={game.state.options?.load_jitter ?? 0}
 										onchange={(e) => handleNumberChange('load_jitter', e)}
 										aria-describedby="ms-jitter-hint" />
-									<span class="text-[10px] text-text-muted mt-0.5 block" id="ms-jitter-hint">0 = exact profile</span>
+									<span class="text-[11px] text-text-muted mt-0.5 block" id="ms-jitter-hint">0 = exact profile</span>
 								</div>
 							</div>
 						</div>
@@ -287,7 +287,7 @@
 								</div>
 							</div>
 							{#if (game.state.options?.load_jitter ?? 0) > 0}
-								<p class="text-[10px] text-text-muted mt-2 px-1">Load jitter: +/-{game.state.options?.load_jitter}%</p>
+								<p class="text-[11px] text-text-muted mt-2 px-1">Load jitter: +/-{game.state.options?.load_jitter}%</p>
 							{/if}
 							<p class="text-xs text-text-muted mt-2 leading-[1.4] px-1">{@render paymentDescription()}</p>
 						</div>
@@ -471,7 +471,7 @@
 	/* ---- Editable banner ---- */
 	.editable-banner {
 		font-family: var(--font-body);
-		font-size: 10px;
+		font-size: 11px;
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-section);
@@ -492,7 +492,7 @@
 	}
 	.settings-section-label {
 		font-family: var(--font-body);
-		font-size: 10px;
+		font-size: 11px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-section);
@@ -587,7 +587,7 @@
 	}
 	.config-label {
 		font-family: var(--font-body);
-		font-size: 10px;
+		font-size: 11px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-brand);

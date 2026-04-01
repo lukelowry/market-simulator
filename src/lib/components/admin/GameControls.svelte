@@ -125,7 +125,7 @@
 					<div class="gcp-dot gcp-dot--gold"></div>
 					<span class="gcp-label">Lobby</span>
 				</div>
-				<span class="font-mono text-xs text-text-inverse/50">{game.state.nplayers} / {game.state.options?.max_participants ?? '?'} players</span>
+				<span class="font-mono text-xs text-text-inverse/70">{game.state.nplayers} / {game.state.options?.max_participants ?? '?'} players</span>
 			</div>
 
 			<div class="gcp-forming-body">
@@ -179,7 +179,7 @@
 					<div class="gcp-dot gcp-dot--live"></div>
 					<span class="gcp-label">Live</span>
 				</div>
-				<span class="font-mono text-xs text-text-inverse/50">
+				<span class="font-mono text-xs text-text-inverse/70">
 					Period {game.state.period} of {game.state.options?.num_periods ?? '—'}
 				</span>
 			</div>
@@ -263,7 +263,7 @@
 					<div class="gcp-dot gcp-dot--gold"></div>
 					<span class="gcp-label">Complete</span>
 				</div>
-				<span class="font-mono text-xs text-text-inverse/50">{game.state.options?.num_periods ?? 0} periods played</span>
+				<span class="font-mono text-xs text-text-inverse/70">{game.state.options?.num_periods ?? 0} periods played</span>
 			</div>
 
 			<div class="gcp-complete-body">
@@ -304,8 +304,8 @@
 	}
 
 	.ribbon-settings {
-		width: 28px;
-		height: 28px;
+		width: 36px;
+		height: 36px;
 		border-radius: var(--radius-sm);
 		display: flex;
 		align-items: center;
@@ -337,7 +337,7 @@
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-brand);
-		color: rgba(245, 242, 237, 0.8);
+		color: rgba(245, 242, 237, 0.85);
 	}
 
 	.gcp-dot {
@@ -543,7 +543,7 @@
 	.gcp-kpi-label {
 		display: block;
 		font-family: var(--font-body);
-		font-size: 10px;
+		font-size: 11px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-brand);
@@ -554,7 +554,7 @@
 	.gcp-kpi-sub {
 		display: block;
 		font-family: var(--font-mono);
-		font-size: 10px;
+		font-size: 11px;
 		color: var(--color-text-muted);
 		margin-top: 0.125rem;
 		white-space: nowrap;

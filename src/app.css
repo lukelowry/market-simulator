@@ -27,9 +27,13 @@
 	--color-border-light: #eae6e0;
 
 	--color-success: #2d8a4e;
+	--color-success-dark: #247a42;
 	--color-success-bg: rgba(45, 138, 78, 0.08);
+	--color-success-text: #1a5e34;
 	--color-warning: #b87d0a;
+	--color-warning-dark: #a06e08;
 	--color-warning-bg: rgba(184, 125, 10, 0.08);
+	--color-warning-text: #7a5206;
 	--color-danger: #c44536;
 	--color-danger-bg: rgba(196, 69, 54, 0.08);
 	--color-info: #4a7c8a;
@@ -188,7 +192,7 @@
 	@apply bg-success text-white border-success;
 }
 .btn-success:hover {
-	background: #247a42;
+	@apply bg-success-dark;
 	box-shadow: 0 4px 12px rgba(45, 138, 78, 0.25);
 }
 
@@ -196,7 +200,7 @@
 	@apply bg-warning text-white border-warning;
 }
 .btn-warning:hover {
-	background: #a06e08;
+	@apply bg-warning-dark;
 }
 
 .btn-danger {
@@ -348,12 +352,10 @@ tbody td {
 }
 
 .callout-success {
-	@apply bg-success-bg border-success;
-	color: #1a5e34;
+	@apply bg-success-bg border-success text-success-text;
 }
 .callout-warning {
-	@apply bg-warning-bg border-warning;
-	color: #7a5206;
+	@apply bg-warning-bg border-warning text-warning-text;
 }
 
 /* ----- Animations ----- */
@@ -381,6 +383,11 @@ tbody td {
 .stagger > *:nth-child(5) { animation-delay: 240ms; }
 
 /* ----- Scrollbar ----- */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-border) var(--color-cream);
+}
+
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { @apply bg-cream; }
 ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }

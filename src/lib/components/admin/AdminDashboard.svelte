@@ -118,7 +118,7 @@
 			</button>
 		</div>
 
-		<main class="min-w-0">
+		<div class="min-w-0">
 			{#if !selectedMarket}
 				<div class="flex flex-col items-center text-center py-16 px-8 text-text-muted">
 					<svg class="opacity-15 mb-5" width="48" height="48" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -190,7 +190,7 @@
 					{/if}
 				</div>
 			{/if}
-		</main>
+		</div>
 	</div>
 </div>
 

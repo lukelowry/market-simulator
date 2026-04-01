@@ -46,7 +46,7 @@
 					</span>
 					<div class="flex items-baseline gap-0.5">
 						<span class="font-mono text-lg font-bold text-gold">#{game.playerRank}</span>
-						<span class="text-xs text-text-inverse/50 ml-1">of {totalPlayers}</span>
+						<span class="text-xs text-text-inverse/70 ml-1">of {totalPlayers}</span>
 					</div>
 				</div>
 			{/if}

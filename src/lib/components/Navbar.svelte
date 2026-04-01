@@ -10,7 +10,7 @@
 	<div class="flex items-center justify-between max-w-[1280px] mx-auto py-4 px-6">
 		<a href="/" class="flex flex-col no-underline text-text-inverse hover:text-text-inverse">
 			<span class="font-display text-lg sm:text-xl font-bold tracking-[-0.01em] leading-[1.2]">Energy Market Simulator</span>
-			<span class="hidden sm:block text-xs font-normal opacity-70 tracking-[0.1em] uppercase mt-0.5">Texas A&M University</span>
+			<span class="hidden sm:block text-xs font-normal opacity-80 tracking-[0.1em] uppercase mt-0.5">Texas A&M University</span>
 		</a>
 		{#if connection.role}
 			<div class="flex items-center gap-4">

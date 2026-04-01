@@ -2,6 +2,13 @@
 	import { game } from '$lib/stores/gameStore.svelte.js';
 	import { connection } from '$lib/stores/connectionStore.svelte.js';
 
+	let scrolledBottom = $state(false);
+
+	function onLogScroll(e: Event) {
+		const el = e.target as HTMLElement;
+		scrolledBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 8;
+	}
+
 	const periods = $derived([...game.state.periods].reverse());
 	const lastPeriod = $derived(periods[0] ?? null);
 
@@ -39,7 +46,7 @@
 			<span class="block font-mono text-2xl font-bold text-text-primary leading-none">
 				${lastClearingPrice}
 			</span>
-			<span class="block text-[10px] font-semibold uppercase tracking-brand text-text-muted mt-1.5">Clearing Price</span>
+			<span class="block text-[11px] font-semibold uppercase tracking-brand text-text-muted mt-1.5">Clearing Price</span>
 			{#if lastProfit !== null}
 				<div class="mt-2">
 					<span class="inline-block font-mono text-sm font-semibold px-2 py-0.5 rounded-sm"
@@ -51,7 +58,7 @@
 					>
 						{lastProfit >= 0 ? '+' : ''}${lastProfit.toLocaleString()}
 					</span>
-					<span class="block text-[10px] font-semibold uppercase tracking-brand text-text-muted mt-1">Your Last Profit</span>
+					<span class="block text-[11px] font-semibold uppercase tracking-brand text-text-muted mt-1">Your Last Profit</span>
 				</div>
 			{/if}
 		</div>
@@ -59,29 +66,37 @@
 
 	<!-- Period Log -->
 	{#if periods.length > 0}
+		<div class="period-log-wrap" class:scrolled-bottom={scrolledBottom}>
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-		<div class="period-log" tabindex="0" role="region" aria-label="Period history log">
-			<div class="log-header">
-				<span>Per</span>
-				<span>Load</span>
-				<span>Price</span>
-				<span class="text-right">Profit</span>
-			</div>
-			{#each periods as period}
-				{@const rawProfit = period.players[connection.participantName]?.profit}
-				{@const profit = rawProfit != null ? Math.round(rawProfit) : null}
-				<div class="log-row">
-					<span class="text-text-muted">{period.number}</span>
-					<span>{period.load} MW</span>
-					<span>${period.marginal_cost != null ? Math.round(period.marginal_cost) : '—'}</span>
-					<span class="text-right"
-						class:text-success={profit !== null && profit > 0}
-						class:text-danger={profit !== null && profit < 0}
-					>
-						{profit !== null ? `${profit >= 0 ? '+' : ''}$${profit.toLocaleString()}` : '—'}
-					</span>
-				</div>
-			{/each}
+		<div class="period-log" tabindex="0" role="region" aria-label="Period history log" onscroll={onLogScroll}>
+			<table class="log-table">
+				<thead>
+					<tr class="log-header">
+						<th scope="col">Per</th>
+						<th scope="col">Load</th>
+						<th scope="col">Price</th>
+						<th scope="col" class="text-right">Profit</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each periods as period}
+						{@const rawProfit = period.players[connection.participantName]?.profit}
+						{@const profit = rawProfit != null ? Math.round(rawProfit) : null}
+						<tr class="log-row">
+							<td class="text-text-muted">{period.number}</td>
+							<td>{period.load} MW</td>
+							<td>${period.marginal_cost != null ? Math.round(period.marginal_cost) : '—'}</td>
+							<td class="text-right"
+								class:text-success={profit !== null && profit > 0}
+								class:text-danger={profit !== null && profit < 0}
+							>
+								{profit !== null ? `${profit >= 0 ? '+' : ''}$${profit.toLocaleString()}` : '—'}
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
 		</div>
 	{:else}
 		<div class="py-6 px-5 text-center text-sm text-text-muted italic">
@@ -108,15 +123,49 @@
 	.period-log {
 		max-height: 220px;
 		overflow-y: auto;
+		position: relative;
+	}
+	/* Bottom fade to hint at scrollable content */
+	.period-log-wrap {
+		position: relative;
+	}
+	.period-log-wrap::after {
+		content: '';
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 24px;
+		background: linear-gradient(to bottom, transparent, white);
+		pointer-events: none;
+		opacity: 1;
+		transition: opacity 150ms ease;
+	}
+	.period-log-wrap.scrolled-bottom::after {
+		opacity: 0;
 	}
 
-	.log-header {
-		display: grid;
-		grid-template-columns: 36px 1fr 1fr 1fr;
-		gap: 4px;
-		padding: 6px 20px;
+	.log-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	/* Override global table styles for this compact log */
+	.log-table :global(thead) {
+		background: none;
+		color: inherit;
+	}
+	.log-table :global(tbody tr:nth-child(even)) {
+		background: none;
+	}
+	.log-table :global(tbody td) {
+		padding: 0;
+		font-variant-numeric: normal;
+	}
+
+	.log-header th {
+		padding: 6px 4px;
 		font-family: var(--font-body);
-		font-size: 10px;
+		font-size: 11px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-brand);
@@ -125,16 +174,21 @@
 		position: sticky;
 		top: 0;
 		background: white;
+		text-align: left;
+		white-space: nowrap;
 	}
+	.log-header th:first-child { padding-left: 20px; width: 36px; }
+	.log-header th:last-child { padding-right: 20px; }
 
-	.log-row {
-		display: grid;
-		grid-template-columns: 36px 1fr 1fr 1fr;
-		gap: 4px;
-		padding: 5px 20px;
+	.log-row td {
+		padding: 5px 4px;
 		font-family: var(--font-mono);
 		font-size: 12px;
 		font-weight: 500;
+	}
+	.log-row td:first-child { padding-left: 20px; width: 36px; }
+	.log-row td:last-child { padding-right: 20px; }
+	.log-row {
 		border-bottom: 1px solid var(--color-border-light);
 		transition: background 100ms var(--ease-brand);
 	}
@@ -152,7 +206,7 @@
 
 	.stat-label {
 		font-family: var(--font-body);
-		font-size: 10px;
+		font-size: 11px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-brand);
