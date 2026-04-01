@@ -29,7 +29,7 @@
 			<div class="flex flex-col">
 				{#each leaderboard as player, i}
 					<div class="flex items-center gap-3 py-3 px-5 border-b border-border-light transition-[background] duration-100 ease-brand last:border-b-0 hover:bg-gold-faint {i === 0 ? 'bg-gradient-to-r from-gold-faint to-transparent' : ''}">
-						<span class="w-6 h-6 flex items-center justify-center font-mono text-xs font-bold rounded-full shrink-0 {i === 0 ? 'bg-gold text-white' : i === 1 ? 'bg-silver text-white' : i === 2 ? 'bg-bronze text-white' : 'bg-cream-dark text-text-muted'}">{i + 1}</span>
+						<span class="w-6 h-6 flex items-center justify-center font-mono text-xs font-bold rounded-full shrink-0 {i === 0 ? 'bg-gold text-text-inverse' : i === 1 ? 'bg-silver text-text-inverse' : i === 2 ? 'bg-bronze text-text-inverse' : 'bg-cream-dark text-text-muted'}">{i + 1}</span>
 						<div class="flex-1 min-w-0">
 							<span class="block text-sm font-semibold text-text-primary mb-0.5">{player.key}</span>
 							<div class="h-[3px] bg-border-light rounded-full overflow-hidden">

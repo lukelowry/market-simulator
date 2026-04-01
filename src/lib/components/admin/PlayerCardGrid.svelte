@@ -78,7 +78,7 @@
 								<span class="block font-mono text-[11px] text-text-muted truncate">{player.uin}</span>
 							{/if}
 						</div>
-						<span class="w-2 h-2 rounded-full shrink-0 mt-1.5 {online ? 'bg-success shadow-[0_0_6px_rgba(45,138,78,0.4)]' : 'bg-border'}"></span>
+						<span class="w-2 h-2 rounded-full shrink-0 mt-1.5 {online ? 'bg-success shadow-[0_0_6px_var(--color-success)]' : 'bg-border'}"></span>
 					</div>
 					{#if isRunningOrCompleted}
 						<span class="font-mono text-lg font-bold" class:text-success={player.money > 0} class:text-danger={player.money < 0}>

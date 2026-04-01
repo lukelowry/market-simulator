@@ -189,15 +189,15 @@
 }
 
 .btn-success {
-	@apply bg-success text-white border-success;
+	@apply bg-success text-text-inverse border-success;
 }
 .btn-success:hover {
 	@apply bg-success-dark;
-	box-shadow: 0 4px 12px rgba(45, 138, 78, 0.25);
+	box-shadow: 0 4px 12px color-mix(in srgb, var(--color-success) 25%, transparent);
 }
 
 .btn-warning {
-	@apply bg-warning text-white border-warning;
+	@apply bg-warning text-text-inverse border-warning;
 }
 .btn-warning:hover {
 	@apply bg-warning-dark;
@@ -207,7 +207,7 @@
 	@apply bg-transparent text-danger border-danger;
 }
 .btn-danger:hover {
-	@apply bg-danger text-white;
+	@apply bg-danger text-text-inverse;
 }
 
 .btn-sm {
@@ -239,7 +239,7 @@
 .form-select:focus {
 	@apply outline-none;
 	border-color: var(--color-maroon);
-	box-shadow: 0 0 0 3px rgba(80, 0, 0, 0.1);
+	box-shadow: 0 0 0 3px var(--color-maroon-faint);
 }
 
 .form-input::placeholder {
@@ -402,7 +402,7 @@ tbody td {
 .modal-backdrop {
 	@apply absolute inset-0;
 	z-index: 0;
-	background: rgba(0, 0, 0, 0.4);
+	background: color-mix(in srgb, var(--color-text-primary) 40%, transparent);
 	backdrop-filter: blur(4px);
 }
 

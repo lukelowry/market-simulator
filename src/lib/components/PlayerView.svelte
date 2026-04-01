@@ -98,7 +98,7 @@
 {:else if !showGame}
 	<!-- Market Browser -->
 	{#if showWelcomeBanner}
-		<div class="fixed top-4 left-1/2 -translate-x-1/2 z-[9000] w-auto max-w-[480px] px-5 py-3 bg-success text-white rounded shadow-lg text-sm font-semibold flex items-center gap-2 welcome-toast pointer-events-none" role="status" aria-live="polite">
+		<div class="fixed top-4 left-1/2 -translate-x-1/2 z-[9000] w-auto max-w-[480px] px-5 py-3 bg-success text-text-inverse rounded shadow-lg text-sm font-semibold flex items-center gap-2 welcome-toast pointer-events-none" role="status" aria-live="polite">
 			<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="shrink-0"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>
 			Welcome, {connection.participantName}! Select a market below to join.
 		</div>
@@ -180,28 +180,28 @@
 							<div class="card-header">How It Works</div>
 							<div class="card-body flex flex-col gap-5">
 								<div class="flex gap-3">
-									<div class="w-7 h-7 rounded-full bg-maroon text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
+									<div class="w-7 h-7 rounded-full bg-maroon text-text-inverse flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
 									<div>
 										<p class="font-semibold text-sm text-text-primary mb-0.5">Your Portfolio</p>
 										<p class="text-sm text-text-muted">You own {genCount} power generators, each with a different capacity (MW) and production cost ($/MW). Larger generators are cheaper to run.</p>
 									</div>
 								</div>
 								<div class="flex gap-3">
-									<div class="w-7 h-7 rounded-full bg-maroon text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
+									<div class="w-7 h-7 rounded-full bg-maroon text-text-inverse flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
 									<div>
 										<p class="font-semibold text-sm text-text-primary mb-0.5">Submit Offers</p>
 										<p class="text-sm text-text-muted">Each period, set a price ($/MW) for each generator. This is the minimum price you'll accept to supply power. You must submit before the timer runs out.</p>
 									</div>
 								</div>
 								<div class="flex gap-3">
-									<div class="w-7 h-7 rounded-full bg-maroon text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</div>
+									<div class="w-7 h-7 rounded-full bg-maroon text-text-inverse flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</div>
 									<div>
 										<p class="font-semibold text-sm text-text-primary mb-0.5">Market Clearing</p>
 										<p class="text-sm text-text-muted">All offers are ranked cheapest to most expensive. Demand is filled from the bottom up. The last generator needed to meet demand sets the market clearing price.</p>
 									</div>
 								</div>
 								<div class="flex gap-3">
-									<div class="w-7 h-7 rounded-full bg-maroon text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</div>
+									<div class="w-7 h-7 rounded-full bg-maroon text-text-inverse flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</div>
 									<div>
 										<p class="font-semibold text-sm text-text-primary mb-0.5">Earning Profit</p>
 										{#if game.state.options?.payment_method === 'pay_as_offered'}
@@ -212,7 +212,7 @@
 									</div>
 								</div>
 								<div class="flex gap-3 pt-3 border-t border-border-light">
-									<div class="w-7 h-7 rounded-full bg-gold text-white flex items-center justify-center shrink-0 mt-0.5">
+									<div class="w-7 h-7 rounded-full bg-gold text-text-inverse flex items-center justify-center shrink-0 mt-0.5">
 										<svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
 											<path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.399l-.31 0 .07-.334 2.16-.33h-.002zm-.41-3.35a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
 										</svg>
@@ -257,5 +257,10 @@
 		25% { content: '.'; }
 		50% { content: '..'; }
 		75% { content: '...'; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.welcome-toast { animation: none; opacity: 1; }
+		.waiting-dots::after { animation: none; content: '...'; }
 	}
 </style>

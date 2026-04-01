@@ -103,7 +103,7 @@
 	{/if}
 
 	{#if showSubmitToast}
-		<div class="submit-toast absolute top-3 right-5 flex items-center gap-2 py-2 px-4 bg-success text-white rounded-sm text-sm font-semibold shadow z-10" role="status" aria-live="polite">
+		<div class="submit-toast absolute top-3 right-5 flex items-center gap-2 py-2 px-4 bg-success text-text-inverse rounded-sm text-sm font-semibold shadow z-10" role="status" aria-live="polite">
 			<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
 				<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
 			</svg>
@@ -132,7 +132,7 @@
 								{#if isParticipantRunning && gen.owner === connection.participantName}
 									<input
 										type="number"
-										class="w-[90px] py-1 px-2 font-mono text-sm border-[1.5px] border-border rounded-sm bg-white text-text-primary transition-[border-color,box-shadow,background] duration-200 ease-brand hover:border-maroon-light focus:outline-none focus:border-maroon focus:shadow-[0_0_0_3px_rgba(80,0,0,0.1)]"
+										class="w-[90px] py-1 px-2 font-mono text-sm border-[1.5px] border-border rounded-sm bg-white text-text-primary transition-[border-color,box-shadow,background] duration-200 ease-brand hover:border-maroon-light focus:outline-none focus:border-maroon focus:shadow-[0_0_0_3px_var(--color-maroon-faint)]"
 										min="0"
 										max={game.state.options?.max_offer_price ?? 200}
 										step="1"
@@ -162,5 +162,9 @@
 	@keyframes fadeOutAfterDelay {
 		0%, 80% { opacity: 1; }
 		100% { opacity: 0; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.submit-toast { animation: none; }
 	}
 </style>

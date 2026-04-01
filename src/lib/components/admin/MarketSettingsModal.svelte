@@ -345,7 +345,7 @@
 									<p class="danger-confirm-msg">Reset all game data? This cannot be undone.</p>
 									<div class="danger-confirm-btns">
 										<button class="btn btn-secondary btn-sm" onclick={() => { showResetConfirm = false; }}>Cancel</button>
-										<button class="btn btn-sm bg-danger text-white border-danger hover:bg-[#a33729]" onclick={executeReset}>Confirm Reset</button>
+										<button class="btn btn-sm bg-danger text-text-inverse border-danger hover:brightness-90" onclick={executeReset}>Confirm Reset</button>
 									</div>
 								</div>
 							{/if}
@@ -479,7 +479,7 @@
 		background: var(--color-maroon-faint);
 		text-align: center;
 		padding: 0.375rem 1rem;
-		border-bottom: 1px solid rgba(80, 0, 0, 0.08);
+		border-bottom: 1px solid var(--color-maroon-faint);
 	}
 
 	/* ---- Sections ---- */
@@ -528,7 +528,7 @@
 	.edit-input:focus {
 		outline: none;
 		border-color: var(--color-maroon);
-		box-shadow: 0 0 0 3px rgba(80, 0, 0, 0.08);
+		box-shadow: 0 0 0 3px var(--color-maroon-faint);
 	}
 
 	/* ---- Preset buttons ---- */
@@ -651,7 +651,7 @@
 
 	/* ---- Danger zone ---- */
 	.settings-danger-section {
-		background: linear-gradient(180deg, transparent 0%, rgba(196, 69, 54, 0.02) 100%);
+		background: linear-gradient(180deg, transparent 0%, var(--color-danger-bg) 100%);
 	}
 
 	.danger-actions {
@@ -695,7 +695,7 @@
 		transition: all 150ms var(--ease-brand);
 	}
 	.danger-action:hover .danger-action-icon {
-		background: rgba(196, 69, 54, 0.12);
+		background: var(--color-danger-bg);
 		color: var(--color-danger);
 	}
 	.danger-action-icon--delete {
@@ -721,13 +721,13 @@
 	.danger-confirm {
 		padding: 0.75rem;
 		background: var(--color-warning-bg);
-		border: 1px solid rgba(184, 125, 10, 0.2);
+		border: 1px solid var(--color-warning);
 		border-radius: var(--radius-sm);
 	}
 	.danger-confirm-msg {
 		font-size: 0.8125rem;
 		font-weight: 500;
-		color: #7a5206;
+		color: var(--color-warning-text);
 		margin: 0 0 0.75rem;
 	}
 	.danger-confirm-btns {

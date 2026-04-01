@@ -28,7 +28,7 @@
 					</svg>
 					<span>{connection.participantName.toUpperCase()}</span>
 				</div>
-				<button class="bg-white/10 text-text-inverse border border-white/20 py-1 px-4 font-body text-xs font-semibold rounded-sm cursor-pointer tracking-[0.03em] transition-all duration-200 ease-brand hover:bg-white/20 hover:border-white/40 focus-visible:outline-3 focus-visible:outline-gold focus-visible:outline-offset-2" onclick={logout} aria-label="Log out">Log Out</button>
+				<button class="bg-text-inverse/10 text-text-inverse border border-text-inverse/20 py-1 px-4 font-body text-xs font-semibold rounded-sm cursor-pointer tracking-[0.03em] transition-all duration-200 ease-brand hover:bg-text-inverse/20 hover:border-text-inverse/40 focus-visible:outline-3 focus-visible:outline-gold focus-visible:outline-offset-2" onclick={logout} aria-label="Log out">Log Out</button>
 			</div>
 		{/if}
 	</div>

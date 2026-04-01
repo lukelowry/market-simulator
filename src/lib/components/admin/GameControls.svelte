@@ -337,7 +337,7 @@
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-brand);
-		color: rgba(245, 242, 237, 0.85);
+		color: color-mix(in srgb, var(--color-text-inverse) 85%, transparent);
 	}
 
 	.gcp-dot {
@@ -425,7 +425,7 @@
 		font-family: var(--font-body);
 		font-size: 0.8125rem;
 		font-weight: 700;
-		color: white;
+		color: var(--color-text-inverse);
 		background: var(--color-maroon);
 		border: 2px solid var(--color-maroon);
 		border-radius: var(--radius);
@@ -497,7 +497,7 @@
 	}
 	.gcp-offers--complete {
 		background: var(--color-success-bg);
-		border-color: rgba(45, 138, 78, 0.15);
+		border-color: var(--color-success-bg);
 	}
 
 	/* Controls column */
@@ -580,7 +580,7 @@
 		width: 40px;
 		height: 40px;
 		border-radius: 50%;
-		background: linear-gradient(135deg, var(--color-gold-faint), rgba(200, 155, 60, 0.2));
+		background: linear-gradient(135deg, var(--color-gold-faint), var(--color-gold-faint));
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -592,6 +592,13 @@
 	@keyframes urgentPulse {
 		0%, 100% { transform: scale(1); }
 		50% { transform: scale(1.04); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.gcp-dot--live,
+		.gcp-countdown--urgent {
+			animation: none;
+		}
 	}
 
 	/* ============ RESPONSIVE ============ */

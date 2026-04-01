@@ -66,7 +66,7 @@
 						<span class="block font-mono text-xs text-text-muted">UIN {player.uin}</span>
 					{/if}
 				</div>
-				<span class="w-2 h-2 rounded-full shrink-0 {online ? 'bg-success shadow-[0_0_6px_rgba(45,138,78,0.4)]' : 'bg-border'}"></span>
+				<span class="w-2 h-2 rounded-full shrink-0 {online ? 'bg-success shadow-[0_0_6px_var(--color-success)]' : 'bg-border'}"></span>
 				<span class="text-xs text-text-muted whitespace-nowrap">{online ? 'Online' : 'Offline'}</span>
 			</div>
 			<div class="flex items-center gap-3 shrink-0">
@@ -87,9 +87,9 @@
 			{#if player}
 				<div class="flex items-center gap-2 flex-wrap mb-5">
 					{#if isRunningOrCompleted}
-						<button class="btn btn-sm bg-gold-faint text-gold border-transparent font-bold font-mono hover:bg-gold hover:text-white" onclick={() => rewardPlayer(100)}>+$100</button>
-						<button class="btn btn-sm bg-gold-faint text-gold border-transparent font-bold font-mono hover:bg-gold hover:text-white" onclick={() => rewardPlayer(500)}>+$500</button>
-						<button class="btn btn-sm bg-danger-bg text-danger border-transparent font-bold font-mono hover:bg-danger hover:text-white" onclick={() => rewardPlayer(-100)}>-$100</button>
+						<button class="btn btn-sm bg-gold-faint text-gold border-transparent font-bold font-mono hover:bg-gold hover:text-text-inverse" onclick={() => rewardPlayer(100)}>+$100</button>
+						<button class="btn btn-sm bg-gold-faint text-gold border-transparent font-bold font-mono hover:bg-gold hover:text-text-inverse" onclick={() => rewardPlayer(500)}>+$500</button>
+						<button class="btn btn-sm bg-danger-bg text-danger border-transparent font-bold font-mono hover:bg-danger hover:text-text-inverse" onclick={() => rewardPlayer(-100)}>-$100</button>
 						<div class="flex gap-0.5">
 							<input
 								type="number"

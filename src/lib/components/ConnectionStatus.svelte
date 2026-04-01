@@ -19,7 +19,7 @@
 
 <div class="bg-white border border-border-light rounded-lg p-10 max-w-[440px] mx-auto shadow">
 	<div class="flex items-start gap-4 mb-8">
-		<div class="w-14 h-14 rounded-full border-2 flex items-center justify-center transition-all duration-200 ease-brand shrink-0 {stageIndex >= 0 ? 'bg-maroon text-white border-maroon' : 'bg-maroon-faint border-transparent text-maroon'}">
+		<div class="w-14 h-14 rounded-full border-2 flex items-center justify-center transition-all duration-200 ease-brand shrink-0 {stageIndex >= 0 ? 'bg-maroon text-text-inverse border-maroon' : 'bg-maroon-faint border-transparent text-maroon'}">
 			{#if stage === 'connecting'}
 				<svg class="icon-signal w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<circle cx="12" cy="12" r="2"/>
@@ -57,7 +57,7 @@
 	<div class="flex items-center mt-6 pt-6 border-t border-border-light">
 		{#each stages as s, i}
 			<div class="relative flex-1 flex items-center" class:current={i === stageIndex}>
-				<div class="step-dot w-3 h-3 rounded-full border-2 transition-all duration-200 ease-brand relative z-[1] {i <= stageIndex ? 'bg-maroon border-maroon shadow-[0_0_0_4px_rgba(80,0,0,0.05)]' : 'bg-cream-dark border-border-light'}"></div>
+				<div class="step-dot w-3 h-3 rounded-full border-2 transition-all duration-200 ease-brand relative z-[1] {i <= stageIndex ? 'bg-maroon border-maroon shadow-[0_0_0_4px_var(--color-maroon-faint)]' : 'bg-cream-dark border-border-light'}"></div>
 				{#if i < stages.length - 1}
 					<div class="flex-1 h-0.5 mx-1 transition-[background] duration-200 ease-brand {i <= stageIndex ? 'bg-maroon' : 'bg-border-light'}"></div>
 				{/if}
@@ -89,5 +89,11 @@
 	@keyframes dotPulse {
 		0%, 100% { transform: scale(1); }
 		50% { transform: scale(1.2); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.icon-signal, .icon-handshake, .icon-check, .current .step-dot {
+			animation: none;
+		}
 	}
 </style>
