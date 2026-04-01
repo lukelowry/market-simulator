@@ -4,6 +4,7 @@
 	let { onselect }: { onselect: (playerId: string) => void } = $props();
 
 	const isRunningOrCompleted = $derived(game.isActive);
+	const isRunning = $derived(game.state.state === 'running');
 
 	const offerStatus = $derived.by(() => {
 		const result: Record<string, 'submitted' | 'pending'> = {};
@@ -68,9 +69,11 @@
 							${player.money.toLocaleString()}
 						</span>
 						<div class="flex justify-between items-center gap-2">
-							<span class="badge" class:badge-success={offerStatus[player.key] === 'submitted'} class:badge-warning={offerStatus[player.key] === 'pending'}>
-								{offerStatus[player.key] === 'submitted' ? 'Submitted' : 'Pending'}
-							</span>
+							{#if isRunning}
+								<span class="badge" class:badge-success={offerStatus[player.key] === 'submitted'} class:badge-warning={offerStatus[player.key] === 'pending'}>
+									{offerStatus[player.key] === 'submitted' ? 'Submitted' : 'Pending'}
+								</span>
+							{/if}
 							{#if sparkData.length >= 2}
 								<svg class="shrink-0" width="60" height="24" viewBox="0 0 60 24" aria-hidden="true">
 									<path d={sparklinePath(sparkData)} fill="none" stroke="var(--color-maroon)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
