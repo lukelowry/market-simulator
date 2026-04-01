@@ -143,7 +143,7 @@
 			<div class="storage-body">
 			<!-- Overview -->
 			<div class="px-6 pt-5 pb-1">
-				<h4 class="text-[11px] font-semibold uppercase tracking-section text-text-muted m-0 mb-3">Overview</h4>
+				<h4 class="text-[10px] font-bold uppercase tracking-section text-text-muted m-0 mb-3">Overview</h4>
 				<div class="grid grid-cols-3 gap-3 mb-4">
 					<div class="flex flex-col gap-0.5 py-2.5 px-3 bg-cream rounded border border-border-light">
 						<span class="text-[10px] font-semibold uppercase tracking-brand text-text-muted">Markets</span>
@@ -175,7 +175,7 @@
 
 			<!-- Registered Markets Table -->
 			<div class="px-6 pt-2 pb-4">
-				<h4 class="text-[11px] font-semibold uppercase tracking-section text-text-muted m-0 mb-3">Registered Markets</h4>
+				<h4 class="text-[10px] font-bold uppercase tracking-section text-text-muted m-0 mb-3">Registered Markets</h4>
 
 				{#if loading}
 					<div class="flex items-center justify-center py-8 text-text-muted text-sm gap-2" role="status">
@@ -234,7 +234,7 @@
 
 			<!-- Probe Orphaned DO -->
 			<div class="px-6 pt-2 pb-5 border-t border-border-light">
-				<h4 class="text-[11px] font-semibold uppercase tracking-section text-text-muted m-0 mb-2 mt-4">Probe by Name</h4>
+				<h4 class="text-[10px] font-bold uppercase tracking-section text-text-muted m-0 mb-2 mt-4">Probe by Name</h4>
 				<p class="text-xs text-text-muted m-0 mb-3">Check if a Durable Object exists for a market name not in the registry (orphaned data).</p>
 				<div class="flex gap-2 mb-3">
 					<input

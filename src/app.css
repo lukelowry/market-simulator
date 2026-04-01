@@ -116,6 +116,11 @@
 		@apply outline-3 outline-gold outline-offset-2;
 	}
 
+	/* Mono text is always data — tabular figures prevent jitter when values change */
+	.font-mono {
+		font-variant-numeric: tabular-nums;
+	}
+
 	::selection {
 		background: rgba(80, 0, 0, 0.15);
 		@apply text-text-primary;
@@ -321,6 +326,7 @@ tbody tr:hover {
 
 tbody td {
 	@apply py-3 px-4 font-mono text-sm;
+	font-variant-numeric: tabular-nums;
 }
 
 /* ----- Badges ----- */

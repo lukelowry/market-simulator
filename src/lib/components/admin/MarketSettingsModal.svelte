@@ -587,7 +587,7 @@
 	}
 	.config-label {
 		font-family: var(--font-body);
-		font-size: 9px;
+		font-size: 10px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-brand);
