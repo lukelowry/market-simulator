@@ -79,17 +79,16 @@
 	const isParticipantRunning = $derived(connection.role === 'participant' && game.state.state === 'running');
 </script>
 
-<section class="card relative mb-6" aria-label="Generator list">
+<form class="card relative mb-6" aria-label="Generator list" onsubmit={(e) => { e.preventDefault(); if (isParticipantRunning) submitOffers(); }}>
 	<div class="card-header flex items-center justify-between">
 		<span>Generators</span>
 		{#if isParticipantRunning}
 			<button
-				type="button"
+				type="submit"
 				class="btn btn-sm py-1 px-4"
 				class:btn-primary={!hasSubmittedThisPeriod && !submitPending}
 				class:btn-success={hasSubmittedThisPeriod && !submitPending}
 				class:btn-secondary={submitPending}
-				onclick={submitOffers}
 				disabled={submitPending}
 			>
 				{#if submitPending}
@@ -166,7 +165,7 @@
 			</tbody>
 		</table>
 	</div>
-</section>
+</form>
 
 <style>
 	.submit-toast {

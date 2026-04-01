@@ -64,7 +64,8 @@
 
 	<!-- Period Log -->
 	{#if periods.length > 0}
-		<div class="period-log">
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+		<div class="period-log" tabindex="0" role="region" aria-label="Period history log">
 			<div class="log-header">
 				<span>Per</span>
 				<span>Load</span>

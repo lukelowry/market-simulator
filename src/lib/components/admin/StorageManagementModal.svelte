@@ -178,7 +178,7 @@
 				<h4 class="text-[11px] font-semibold uppercase tracking-section text-text-muted m-0 mb-3">Registered Markets</h4>
 
 				{#if loading}
-					<div class="flex items-center justify-center py-8 text-text-muted text-sm gap-2">
+					<div class="flex items-center justify-center py-8 text-text-muted text-sm gap-2" role="status">
 						<div class="w-4 h-4 border-2 border-border-light border-t-maroon rounded-full animate-spin" aria-hidden="true"></div>
 						Loading storage info...
 					</div>

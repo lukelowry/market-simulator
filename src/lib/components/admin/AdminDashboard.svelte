@@ -143,13 +143,13 @@
 					</button>
 				</div>
 			{:else if !connection.connected && !connection.reconnecting}
-				<div class="flex flex-col items-center text-center py-16 px-8 text-text-muted">
+				<div class="flex flex-col items-center text-center py-16 px-8 text-text-muted" role="status">
 					<div class="w-8 h-8 border-3 border-border-light border-t-maroon rounded-full animate-spin mb-5" aria-hidden="true"></div>
 					<h3 class="mb-3 text-text-secondary">Connecting to {selectedMarket}</h3>
 					<p class="text-sm max-w-[340px]">Establishing connection...</p>
 				</div>
 			{:else if disconnectTimer.tooLong}
-				<div class="flex flex-col items-center text-center py-16 px-8 text-text-muted">
+				<div class="flex flex-col items-center text-center py-16 px-8 text-text-muted" role="status">
 					<div class="w-8 h-8 border-3 border-border-light border-t-maroon rounded-full animate-spin mb-5" aria-hidden="true"></div>
 					<h3 class="mb-3 text-text-secondary">Reconnecting to {selectedMarket}</h3>
 					<p class="text-sm max-w-[340px]">Connection lost. Attempting to reconnect...</p>

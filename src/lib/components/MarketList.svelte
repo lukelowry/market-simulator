@@ -45,8 +45,8 @@
 </script>
 
 {#if loading}
-	<div class="flex flex-col items-center text-center py-16 px-8 bg-white border border-border-light rounded-lg shadow-sm">
-		<div class="w-10 h-10 rounded-full bg-maroon-faint border-3 border-maroon opacity-30 mb-4 animate-pulse" aria-label="Loading markets"></div>
+	<div class="flex flex-col items-center text-center py-16 px-8 bg-white border border-border-light rounded-lg shadow-sm" role="status">
+		<div class="w-10 h-10 rounded-full bg-maroon-faint border-3 border-maroon opacity-30 mb-4 animate-pulse" aria-hidden="true"></div>
 		<p class="text-sm text-text-muted max-w-[320px]">Fetching available markets...</p>
 	</div>
 {:else}

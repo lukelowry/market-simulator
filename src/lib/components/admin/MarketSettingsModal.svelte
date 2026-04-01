@@ -129,23 +129,20 @@
 							<div class="settings-section-label">Game Structure</div>
 							<div class="grid grid-cols-3 gap-3">
 								<div>
-									<!-- svelte-ignore a11y_label_has_associated_control -->
-									<label class="edit-label">Max Players</label>
-									<input type="number" class="edit-input" min="2" max="99"
+									<label class="edit-label" for="ms-max-players">Max Players</label>
+									<input type="number" class="edit-input" id="ms-max-players" min="2" max="99"
 										value={game.state.options?.max_participants}
 										onchange={(e) => handleNumberChange('max_participants', e)} />
 								</div>
 								<div>
-									<!-- svelte-ignore a11y_label_has_associated_control -->
-									<label class="edit-label">Periods</label>
-									<input type="number" class="edit-input" min="2" max="99"
+									<label class="edit-label" for="ms-periods">Periods</label>
+									<input type="number" class="edit-input" id="ms-periods" min="2" max="99"
 										value={game.state.options?.num_periods}
 										onchange={(e) => handleNumberChange('num_periods', e)} />
 								</div>
 								<div>
-									<!-- svelte-ignore a11y_label_has_associated_control -->
-									<label class="edit-label">Timer (sec)</label>
-									<input type="number" class="edit-input" min="2" max="9999"
+									<label class="edit-label" for="ms-timer">Timer (sec)</label>
+									<input type="number" class="edit-input" id="ms-timer" min="2" max="9999"
 										value={game.state.options?.auto_advance_time}
 										onchange={(e) => handleNumberChange('auto_advance_time', e)} />
 								</div>
@@ -157,34 +154,33 @@
 							<div class="settings-section-label">Market Rules</div>
 
 							<!-- Payment Method -->
-							<!-- svelte-ignore a11y_label_has_associated_control -->
-							<label class="edit-label">Payment Method</label>
-							<div class="flex border-[1.5px] border-border rounded overflow-hidden mb-2">
+							<span class="edit-label" id="ms-payment-label">Payment Method</span>
+							<div class="flex border-[1.5px] border-border rounded overflow-hidden mb-2" role="group" aria-labelledby="ms-payment-label">
 								<button
 									class="flex-1 py-2 px-3 font-body text-sm font-semibold border-none border-r-[1.5px] border-r-border cursor-pointer transition-all duration-100 ease-brand {game.state.options?.payment_method === 'last_accepted_offer' ? 'bg-maroon text-text-inverse' : 'bg-white text-text-secondary hover:bg-maroon-faint hover:text-maroon'}"
 									onclick={() => updateOption('payment_method', 'last_accepted_offer')}
 									type="button"
+									aria-pressed={game.state.options?.payment_method === 'last_accepted_offer'}
 								>LAO</button>
 								<button
 									class="flex-1 py-2 px-3 font-body text-sm font-semibold border-none cursor-pointer transition-all duration-100 ease-brand {game.state.options?.payment_method === 'pay_as_offered' ? 'bg-maroon text-text-inverse' : 'bg-white text-text-secondary hover:bg-maroon-faint hover:text-maroon'}"
 									onclick={() => updateOption('payment_method', 'pay_as_offered')}
 									type="button"
+									aria-pressed={game.state.options?.payment_method === 'pay_as_offered'}
 								>PAO</button>
 							</div>
 							<p class="text-xs text-text-muted leading-[1.4] mb-4">{@render paymentDescription()}</p>
 
 							<div class="grid grid-cols-2 gap-3">
 								<div>
-									<!-- svelte-ignore a11y_label_has_associated_control -->
-									<label class="edit-label">Max Offer Price</label>
-									<input type="number" class="edit-input" min="1" max="9999"
+									<label class="edit-label" for="ms-max-offer">Max Offer Price</label>
+									<input type="number" class="edit-input" id="ms-max-offer" min="1" max="9999"
 										value={game.state.options?.max_offer_price}
 										onchange={(e) => handleNumberChange('max_offer_price', e)} />
 								</div>
 								<div>
-									<!-- svelte-ignore a11y_label_has_associated_control -->
-									<label class="edit-label">Starting Money</label>
-									<input type="number" class="edit-input" min="0" max="999999"
+									<label class="edit-label" for="ms-starting-money">Starting Money</label>
+									<input type="number" class="edit-input" id="ms-starting-money" min="0" max="999999"
 										value={game.state.options?.starting_money}
 										onchange={(e) => handleNumberChange('starting_money', e)} />
 								</div>
@@ -196,14 +192,14 @@
 							<div class="settings-section-label">Supply & Demand</div>
 
 							<!-- Generator Preset -->
-							<!-- svelte-ignore a11y_label_has_associated_control -->
-							<label class="edit-label">Generator Portfolio</label>
-							<div class="grid grid-cols-3 gap-2 mb-4">
+							<span class="edit-label" id="ms-gen-label">Generator Portfolio</span>
+							<div class="grid grid-cols-3 gap-2 mb-4" role="group" aria-labelledby="ms-gen-label">
 								{#each (['standard', 'simple', 'competitive'] as const) as preset}
 									<button
 										class="preset-btn {game.state.options?.gen_preset === preset ? 'preset-btn--active' : ''}"
 										onclick={() => updateOption('gen_preset', preset)}
 										type="button"
+										aria-pressed={game.state.options?.gen_preset === preset}
 									>
 										<span class="font-bold text-xs">{preset === 'standard' ? 'Standard' : preset === 'simple' ? 'Simple' : 'Competitive'}</span>
 										<span class="text-[10px] text-text-muted font-mono">{preset === 'standard' ? '5 gens' : preset === 'simple' ? '3 gens' : '7 gens'}</span>
@@ -212,14 +208,14 @@
 							</div>
 
 							<!-- Load Profile -->
-							<!-- svelte-ignore a11y_label_has_associated_control -->
-							<label class="edit-label">Demand Profile</label>
-							<div class="grid grid-cols-4 gap-2 mb-4">
+							<span class="edit-label" id="ms-demand-label">Demand Profile</span>
+							<div class="grid grid-cols-4 gap-2 mb-4" role="group" aria-labelledby="ms-demand-label">
 								{#each (['realistic', 'flat', 'peak', 'volatile'] as const) as profile}
 									<button
 										class="preset-btn {game.state.options?.load_profile === profile ? 'preset-btn--active' : ''}"
 										onclick={() => updateOption('load_profile', profile)}
 										type="button"
+										aria-pressed={game.state.options?.load_profile === profile}
 									>
 										<span class="font-bold text-xs capitalize">{profile}</span>
 									</button>
@@ -228,20 +224,20 @@
 
 							<div class="grid grid-cols-2 gap-3">
 								<div>
-									<!-- svelte-ignore a11y_label_has_associated_control -->
-									<label class="edit-label" title="When demand exceeds total supply, override clearing price to this value. 0 = disabled.">Scarcity Price</label>
-									<input type="number" class="edit-input" min="0" max="99999"
+									<label class="edit-label" for="ms-scarcity" title="When demand exceeds total supply, override clearing price to this value. 0 = disabled.">Scarcity Price</label>
+									<input type="number" class="edit-input" id="ms-scarcity" min="0" max="99999"
 										value={game.state.options?.scarcity_price ?? 0}
-										onchange={(e) => handleNumberChange('scarcity_price', e)} />
-									<span class="text-[10px] text-text-muted mt-0.5 block">0 = disabled</span>
+										onchange={(e) => handleNumberChange('scarcity_price', e)}
+										aria-describedby="ms-scarcity-hint" />
+									<span class="text-[10px] text-text-muted mt-0.5 block" id="ms-scarcity-hint">0 = disabled</span>
 								</div>
 								<div>
-									<!-- svelte-ignore a11y_label_has_associated_control -->
-									<label class="edit-label" title="Random +/- variation applied to each period's load. 0 = exact profile.">Load Jitter (%)</label>
-									<input type="number" class="edit-input" min="0" max="30"
+									<label class="edit-label" for="ms-jitter" title="Random +/- variation applied to each period's load. 0 = exact profile.">Load Jitter (%)</label>
+									<input type="number" class="edit-input" id="ms-jitter" min="0" max="30"
 										value={game.state.options?.load_jitter ?? 0}
-										onchange={(e) => handleNumberChange('load_jitter', e)} />
-									<span class="text-[10px] text-text-muted mt-0.5 block">0 = exact profile</span>
+										onchange={(e) => handleNumberChange('load_jitter', e)}
+										aria-describedby="ms-jitter-hint" />
+									<span class="text-[10px] text-text-muted mt-0.5 block" id="ms-jitter-hint">0 = exact profile</span>
 								</div>
 							</div>
 						</div>

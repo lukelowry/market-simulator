@@ -25,6 +25,17 @@
 		return periods.slice(startIdx).map(p => p.players[playerId]?.profit ?? 0);
 	}
 
+	function sparklineTrend(data: number[]): string {
+		if (data.length < 2) return '';
+		const first = data.slice(0, Math.ceil(data.length / 2));
+		const second = data.slice(Math.ceil(data.length / 2));
+		const avgFirst = first.reduce((a, b) => a + b, 0) / first.length;
+		const avgSecond = second.reduce((a, b) => a + b, 0) / second.length;
+		const diff = avgSecond - avgFirst;
+		if (Math.abs(diff) < 1) return 'Profit trend: flat';
+		return diff > 0 ? 'Profit trend: increasing' : 'Profit trend: declining';
+	}
+
 	function sparklinePath(data: number[]): string {
 		if (data.length < 2) return '';
 		const max = Math.max(1, ...data.map(Math.abs));
@@ -78,6 +89,7 @@
 								<svg class="shrink-0" width="60" height="24" viewBox="0 0 60 24" aria-hidden="true">
 									<path d={sparklinePath(sparkData)} fill="none" stroke="var(--color-maroon)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
 								</svg>
+								<span class="sr-only">{sparklineTrend(sparkData)}</span>
 							{/if}
 						</div>
 					{:else}

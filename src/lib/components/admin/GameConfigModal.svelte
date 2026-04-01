@@ -143,18 +143,19 @@
 			</div>
 
 			<div class="mb-6">
-				<!-- svelte-ignore a11y_label_has_associated_control -->
-				<label class="form-label">Payment Method</label>
-				<div class="flex border-[1.5px] border-border rounded overflow-hidden">
+				<span class="form-label" id="gcm-payment-label">Payment Method</span>
+				<div class="flex border-[1.5px] border-border rounded overflow-hidden" role="group" aria-labelledby="gcm-payment-label">
 					<button
 						class="flex-1 py-2 px-3 font-body text-sm font-semibold border-none border-r-[1.5px] border-r-border cursor-pointer transition-all duration-100 ease-brand {paymentMethod === 'last_accepted_offer' ? 'bg-maroon text-text-inverse' : 'bg-white text-text-secondary hover:bg-maroon-faint hover:text-maroon'}"
 						onclick={() => { paymentMethod = 'last_accepted_offer'; onFieldChange(); }}
 						type="button"
+						aria-pressed={paymentMethod === 'last_accepted_offer'}
 					>LAO</button>
 					<button
 						class="flex-1 py-2 px-3 font-body text-sm font-semibold border-none cursor-pointer transition-all duration-100 ease-brand {paymentMethod === 'pay_as_offered' ? 'bg-maroon text-text-inverse' : 'bg-white text-text-secondary hover:bg-maroon-faint hover:text-maroon'}"
 						onclick={() => { paymentMethod = 'pay_as_offered'; onFieldChange(); }}
 						type="button"
+						aria-pressed={paymentMethod === 'pay_as_offered'}
 					>PAO</button>
 				</div>
 				<span class="block text-xs text-text-muted mt-2 leading-[1.4]">
