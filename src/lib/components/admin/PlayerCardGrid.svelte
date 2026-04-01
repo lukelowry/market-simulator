@@ -71,9 +71,14 @@
 				{@const online = game.state.connectedClients?.includes(player.key)}
 				{@const sparkData = isRunningOrCompleted ? getSparkline(player.key) : []}
 				<button class="flex flex-col gap-2 p-4 bg-white border-[1.5px] border-border-light rounded cursor-pointer text-left font-body transition-all duration-100 ease-brand hover:border-maroon hover:shadow-sm hover:-translate-y-px" onclick={() => onselect(player.key)} aria-label="View details for {player.key}">
-					<div class="flex justify-between items-center">
-						<span class="font-semibold text-sm text-text-primary">{player.key}</span>
-						<span class="w-2 h-2 rounded-full shrink-0 {online ? 'bg-success shadow-[0_0_6px_rgba(45,138,78,0.4)]' : 'bg-border'}"></span>
+					<div class="flex justify-between items-start">
+						<div class="min-w-0">
+							<span class="block font-semibold text-sm text-text-primary truncate">{player.key}</span>
+							{#if player.uin}
+								<span class="block font-mono text-[11px] text-text-muted truncate">{player.uin}</span>
+							{/if}
+						</div>
+						<span class="w-2 h-2 rounded-full shrink-0 mt-1.5 {online ? 'bg-success shadow-[0_0_6px_rgba(45,138,78,0.4)]' : 'bg-border'}"></span>
 					</div>
 					{#if isRunningOrCompleted}
 						<span class="font-mono text-lg font-bold" class:text-success={player.money > 0} class:text-danger={player.money < 0}>

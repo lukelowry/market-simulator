@@ -19,22 +19,6 @@
 		}
 	});
 
-	// Unit labels: "Unit 1", "Unit 2", etc. based on player's gen order
-	const genLabels: Record<string, string> = $derived.by(() => {
-		const labels: Record<string, string> = {};
-		const playerGens = Object.values(game.state.gens)
-			.filter(g => g.owner === connection.participantName)
-			.sort((a, b) => {
-				const numA = parseInt(a.id.replace(/\D/g, ''));
-				const numB = parseInt(b.id.replace(/\D/g, ''));
-				return numA - numB;
-			});
-		playerGens.forEach((gen, i) => {
-			labels[gen.id] = `Unit ${i + 1}`;
-		});
-		return labels;
-	});
-
 	// Offer submission tracking
 	let showSubmitToast = $state(false);
 	let toastTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -141,7 +125,7 @@
 				{#each Object.values(game.state.gens) as gen}
 					{#if connection.role === 'admin' || connection.participantName === gen.owner}
 						<tr>
-							<td>{genLabels[gen.id] ?? gen.id}</td>
+							<td>{gen.id}</td>
 							<td>{gen.capacity}</td>
 							<td>{gen.cost}</td>
 							<td>
@@ -153,7 +137,7 @@
 										max={game.state.options?.max_offer_price ?? 200}
 										step="1"
 										bind:value={offerValues[gen.id]}
-										aria-label="Offer price for {genLabels[gen.id] ?? gen.id}"
+										aria-label="Offer price for {gen.id}"
 									/>
 								{:else}
 									{gen.offer}

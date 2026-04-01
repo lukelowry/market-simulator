@@ -71,11 +71,11 @@ function stripPeriodGens(periods: Period[]): object[] {
 	return periods.map(({ gens, ...rest }) => rest);
 }
 
-/** Strip server-internal fields (id, uin, ngens) from player data before broadcast. */
+/** Strip server-internal fields (id, ngens) from player data before admin broadcast. UIN is included for admin visibility. */
 export function stripPlayerInternals(players: Record<string, Player>): Record<string, object> {
 	const result: Record<string, object> = {};
 	for (const [key, player] of Object.entries(players)) {
-		result[key] = { money: player.money, last_offer_time: player.last_offer_time };
+		result[key] = { money: player.money, last_offer_time: player.last_offer_time, uin: player.uin };
 	}
 	return result;
 }

@@ -47,6 +47,8 @@ export interface Player {
 	money: number;
 	/** Epoch ms when this player last submitted offers. Compared to `last_advance_time` to detect stale submissions. */
 	last_offer_time: number;
+	/** University ID. Admin-only; omitted for participant clients. */
+	uin?: string;
 }
 
 export interface Generator {

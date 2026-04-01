@@ -60,7 +60,12 @@
 		<!-- Sticky header -->
 		<div class="detail-header">
 			<div class="flex items-center gap-2 min-w-0">
-				<h3 class="m-0 text-xl truncate">{playerId}</h3>
+				<div class="min-w-0">
+					<h3 class="m-0 text-xl truncate">{playerId}</h3>
+					{#if player?.uin}
+						<span class="block font-mono text-xs text-text-muted">UIN {player.uin}</span>
+					{/if}
+				</div>
 				<span class="w-2 h-2 rounded-full shrink-0 {online ? 'bg-success shadow-[0_0_6px_rgba(45,138,78,0.4)]' : 'bg-border'}"></span>
 				<span class="text-xs text-text-muted whitespace-nowrap">{online ? 'Online' : 'Offline'}</span>
 			</div>
