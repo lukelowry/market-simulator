@@ -4,7 +4,7 @@
  * Manages the full connection lifecycle: connect → ping/pong heartbeat → exponential
  * backoff reconnect → terminal close handling.
  *
- * Session is persisted to `sessionStorage` so a page reload resumes the prior connection.
+ * Session is persisted to `localStorage` so a page reload resumes the prior connection.
  * This is the sole writer to `connection` and `game` state — all state updates flow through here.
  */
 
@@ -27,13 +27,13 @@ interface StoredSession {
 
 function saveSession(s: StoredSession): void {
 	try {
-		sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+		localStorage.setItem(SESSION_KEY, JSON.stringify(s));
 	} catch { /* quota / private browsing */ }
 }
 
 export function loadSession(): StoredSession | null {
 	try {
-		const raw = sessionStorage.getItem(SESSION_KEY);
+		const raw = localStorage.getItem(SESSION_KEY);
 		return raw ? JSON.parse(raw) : null;
 	} catch {
 		return null;
@@ -42,7 +42,7 @@ export function loadSession(): StoredSession | null {
 
 export function clearSession(): void {
 	try {
-		sessionStorage.removeItem(SESSION_KEY);
+		localStorage.removeItem(SESSION_KEY);
 	} catch { /* no-op */ }
 }
 

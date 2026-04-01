@@ -24,9 +24,10 @@
 			connection.role = 'participant';
 			connect(session.market, 'participant', session.name, undefined, session.token);
 		} else {
-			// Clean up all legacy separate keys (now handled by unified msim_session)
+			// Clean up legacy keys from old storage approaches
 			sessionStorage.removeItem('playerToken');
 			sessionStorage.removeItem('participantName');
+			sessionStorage.removeItem('msim_session');
 		}
 
 		restoringSession = false;

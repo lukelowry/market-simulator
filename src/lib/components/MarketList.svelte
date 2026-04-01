@@ -40,7 +40,9 @@
 	});
 
 	function canJoin(market: MarketListItem): boolean {
-		return market.state === 'forming';
+		// Allow joining forming markets (new player) and running/full markets (reconnection).
+		// The server validates whether the player is actually allowed to rejoin.
+		return market.state === 'forming' || market.state === 'full' || market.state === 'running';
 	}
 </script>
 
@@ -88,7 +90,7 @@
 						{#if onJoin}
 							{#if canJoin(market)}
 								<button class="btn btn-primary btn-sm min-w-[60px]" onclick={() => onJoin(market.name)}>
-									Join
+									{market.state === 'running' ? 'Rejoin' : 'Join'}
 								</button>
 							{:else}
 								<span class="text-text-muted text-sm w-[60px] text-center">&mdash;</span>

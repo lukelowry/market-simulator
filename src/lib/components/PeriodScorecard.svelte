@@ -17,20 +17,15 @@
 
 		let totalPrice = 0;
 		let totalProfit = 0;
-		let profitable = 0;
 
 		for (const p of ps) {
 			totalPrice += p.marginal_cost ?? 0;
-			const profit = p.players[connection.participantName]?.profit ?? 0;
-			totalProfit += profit;
-			if (profit > 0) profitable++;
+			totalProfit += p.players[connection.participantName]?.profit ?? 0;
 		}
 
 		return {
 			avgPrice: Math.round(totalPrice / ps.length),
-			avgProfit: Math.round(totalProfit / ps.length),
-			profitable,
-			total: ps.length
+			avgProfit: Math.round(totalProfit / ps.length)
 		};
 	});
 </script>
@@ -101,13 +96,9 @@
 				<span class="stat-label">Avg Price</span>
 				<span class="font-mono text-xs text-text-primary">${stats.avgPrice}/MWh</span>
 			</div>
-			<div class="stat-row">
+			<div class="stat-row last">
 				<span class="stat-label">Avg Profit</span>
 				<span class="font-mono text-xs" class:text-success={stats.avgProfit > 0} class:text-danger={stats.avgProfit < 0} class:text-text-primary={stats.avgProfit === 0}>${stats.avgProfit.toLocaleString()}</span>
-			</div>
-			<div class="stat-row last">
-				<span class="stat-label">Profitable</span>
-				<span class="font-mono text-xs text-text-primary">{stats.profitable} of {stats.total}</span>
 			</div>
 		</div>
 	{/if}

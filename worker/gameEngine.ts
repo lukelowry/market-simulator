@@ -267,8 +267,9 @@ export function setAutoAdvance(game: GameState, enabled: boolean): AutoAdvanceRe
 	if (game.state !== 'running') return null;
 	game.auto_advance = enabled;
 	if (enabled && game.options) {
-		const remaining = Math.max(5000, game.advance_time - Date.now());
-		game.advance_time = Date.now() + remaining;
+		// Reset to full duration so the timer doesn't fire immediately after a long pause.
+		// Without this, pausing for longer than the remaining time would leave only 5s on unpause.
+		game.advance_time = Date.now() + game.options.auto_advance_time * 1000;
 		return { alarmTime: game.advance_time, deleteAlarm: false };
 	}
 	return { alarmTime: null, deleteAlarm: true };

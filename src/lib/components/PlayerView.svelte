@@ -109,7 +109,7 @@
 			<div>
 				<div class="w-10 h-[3px] bg-gradient-to-r from-maroon to-gold rounded-sm mb-5" aria-hidden="true"></div>
 				<h2 class="mb-2">Available Markets</h2>
-				<p class="text-text-muted text-sm">Select a market to join. Only markets in the "Open" state are accepting players.</p>
+				<p class="text-text-muted text-sm">Select a market to join, or rejoin a game in progress.</p>
 			</div>
 		</div>
 
