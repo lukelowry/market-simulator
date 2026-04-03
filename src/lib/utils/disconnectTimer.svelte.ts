@@ -23,14 +23,21 @@ export function createDisconnectTimer() {
 	let timer: ReturnType<typeof setInterval> | null = null;
 
 	function cleanup() {
-		if (timer) { clearInterval(timer); timer = null; }
+		if (timer) {
+			clearInterval(timer);
+			timer = null;
+		}
 	}
 
 	$effect(() => {
 		cleanup();
 
 		timer = setInterval(() => {
-			if (connection.reconnecting && connection.disconnectedAt && Date.now() - connection.disconnectedAt > DISCONNECT_THRESHOLD_MS) {
+			if (
+				connection.reconnecting &&
+				connection.disconnectedAt &&
+				Date.now() - connection.disconnectedAt > DISCONNECT_THRESHOLD_MS
+			) {
 				tooLong = true;
 			} else {
 				tooLong = false;
@@ -41,6 +48,8 @@ export function createDisconnectTimer() {
 	});
 
 	return {
-		get tooLong() { return tooLong; }
+		get tooLong() {
+			return tooLong;
+		}
 	};
 }

@@ -3,28 +3,14 @@
  * Svelte 5 rune-based game state. Updated exclusively by websocket.ts via the incremental merge protocol.
  */
 
-import type { GameState } from '$lib/types/game.js';
+import type { GameBroadcast } from '$shared/game.js';
+import { createDefaultGameState } from '$shared/game.js';
 import { connection } from './connectionStore.svelte.js';
 
-/** Reset target used by softDisconnect/disconnect. Any new GameState fields need defaults added here. */
-export const DEFAULT_GAME_STATE: GameState = {
-	state: 'uninitialized',
-	visibility: 'public',
-	players: {},
-	gens: {},
-	periods: [],
-	period: 0,
-	nplayers: 0,
-	auto_advance: false,
-	advance_time: 0,
-	last_advance_time: 0
-};
-
 class GameStore {
-	state = $state<GameState>({ ...DEFAULT_GAME_STATE });
+	state = $state<GameBroadcast>(createDefaultGameState());
 
-	/** Server-authoritative player count. May differ from `Object.keys(players).length` during reconnection. */
-	playerCount = $derived(this.state.nplayers);
+	playerCount = $derived(Object.keys(this.state.players).length);
 
 	/** True when game is running or completed — the two states with period/gen data to display. */
 	isActive = $derived(this.state.state === 'running' || this.state.state === 'completed');
@@ -41,8 +27,6 @@ class GameStore {
 				return connection.role === 'admin'
 					? 'A new market has been formed. Close the market when ready.'
 					: 'Waiting for the instructor to start the game.';
-			case 'full':
-				return 'The market is full. Waiting for the game to begin.';
 			case 'running':
 				return '';
 			case 'completed':
@@ -54,7 +38,7 @@ class GameStore {
 
 	/** Reset to default state. */
 	reset() {
-		this.state = { ...DEFAULT_GAME_STATE };
+		this.state = createDefaultGameState();
 	}
 }
 

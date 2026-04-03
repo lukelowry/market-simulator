@@ -4,14 +4,23 @@
  */
 
 import type { RequestHandler } from './$types';
-import { isAdmin } from '$worker/auth.js';
+import { isAdmin, verifyPlayerToken } from '$worker/auth.js';
 
 export const GET: RequestHandler = async ({ url, platform }) => {
 	const env = platform!.env;
 	const key = url.searchParams.get('key');
 	const isAdminAuth = key ? await isAdmin(key, env.ADMIN_PASSWORD) : false;
-	const listUrl = isAdminAuth ? 'https://registry/list?admin=true' : 'https://registry/list';
 
+	const listParams = new URLSearchParams();
+	if (isAdminAuth) listParams.set('admin', 'true');
+
+	const token = url.searchParams.get('token');
+	if (token) {
+		const verified = await verifyPlayerToken(token, env.ADMIN_PASSWORD);
+		if (verified) listParams.set('uin', verified.uin);
+	}
+
+	const listUrl = `https://registry/list?${listParams}`;
 	const registryId = env.MARKET_REGISTRY.idFromName('global');
 	const registry = env.MARKET_REGISTRY.get(registryId);
 	const res = await registry.fetch(new Request(listUrl));

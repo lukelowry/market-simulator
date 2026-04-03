@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { game } from '$lib/stores/gameStore.svelte.js';
-	import { send } from '$lib/services/websocket.js';
-	import { focusTrap } from '$lib/utils/focusTrap.js';
-	import type { GameOptions, GenPreset, LoadProfile, PaymentMethod } from '$lib/types/game.js';
+	import { send } from '$lib/websocket.js';
+	import Modal from '$lib/components/shared/Modal.svelte';
+	import Icon from '$lib/components/shared/Icon.svelte';
+	import type { GameOptions } from '$shared/game.js';
 
 	let {
 		isOpen = $bindable(),
@@ -16,16 +17,19 @@
 
 	let showResetConfirm = $state(false);
 
-	const editable = $derived(game.state.state === 'forming' || game.state.state === 'full');
+	const editable = $derived(game.state.state === 'forming');
 	const hasOptions = $derived(!!game.state.options);
 
 	function updateOption<K extends keyof GameOptions>(key: K, value: GameOptions[K]) {
 		send({ type: 'updateOptions', payload: { [key]: value } });
 	}
 
-	function handleNumberChange(key: keyof GameOptions, e: Event) {
-		const val = parseInt((e.target as HTMLInputElement).value);
-		if (!isNaN(val)) updateOption(key, val as any);
+	function handleNumberChange(key: keyof GameOptions, e: Event, min = 1, max = 9999) {
+		const raw = parseInt((e.target as HTMLInputElement).value);
+		if (isNaN(raw)) return;
+		const val = Math.max(min, Math.min(max, raw));
+		(e.target as HTMLInputElement).value = String(val);
+		updateOption(key, val as GameOptions[typeof key]);
 	}
 
 	function toggleVisibility() {
@@ -36,7 +40,6 @@
 	function executeReset() {
 		send({ type: 'resetGame' });
 		showResetConfirm = false;
-		isOpen = false;
 	}
 
 	function handleDelete() {
@@ -49,28 +52,52 @@
 		showResetConfirm = false;
 	}
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') close();
-	}
-
 	const canReset = $derived(game.state.state !== 'running');
 
 	const paymentLabel = $derived(
-		game.state.options?.payment_method === 'pay_as_offered' ? 'Pay-as-Offered' : 'Last Accepted Offer'
+		game.state.options?.payment_method === 'pay_as_offered'
+			? 'Pay-as-Offered'
+			: 'Last Accepted Offer'
 	);
 	const paymentAbbr = $derived(
 		game.state.options?.payment_method === 'pay_as_offered' ? 'PAO' : 'LAO'
 	);
 
-	const genPresetLabels: Record<string, string> = { standard: 'Std', simple: 'Sim', competitive: 'Cmp' };
-	const genPresetTitles: Record<string, string> = { standard: 'Standard (5 gens)', simple: 'Simple (3 gens)', competitive: 'Competitive (7 gens)' };
-	const loadProfileLabels: Record<string, string> = { realistic: 'Real', flat: 'Flat', peak: 'Peak', volatile: 'Vol' };
-	const loadProfileTitles: Record<string, string> = { realistic: 'Realistic demand curve', flat: 'Flat (constant) demand', peak: 'Peak-heavy demand', volatile: 'Volatile demand swings' };
+	const genPresetLabels: Record<string, string> = {
+		standard: 'Std',
+		simple: 'Sim',
+		competitive: 'Cmp'
+	};
+	const genPresetTitles: Record<string, string> = {
+		standard: 'Standard (5 gens)',
+		simple: 'Simple (3 gens)',
+		competitive: 'Competitive (7 gens)'
+	};
+	const loadProfileLabels: Record<string, string> = {
+		realistic: 'Real',
+		flat: 'Flat',
+		peak: 'Peak',
+		volatile: 'Vol'
+	};
+	const loadProfileTitles: Record<string, string> = {
+		realistic: 'Realistic demand curve',
+		flat: 'Flat (constant) demand',
+		peak: 'Peak-heavy demand',
+		volatile: 'Volatile demand swings'
+	};
 
-	const genPresetAbbr = $derived(genPresetLabels[game.state.options?.gen_preset ?? 'standard'] ?? 'Std');
-	const genPresetTitle = $derived(genPresetTitles[game.state.options?.gen_preset ?? 'standard'] ?? 'Standard');
-	const loadProfileAbbr = $derived(loadProfileLabels[game.state.options?.load_profile ?? 'realistic'] ?? 'Real');
-	const loadProfileTitle = $derived(loadProfileTitles[game.state.options?.load_profile ?? 'realistic'] ?? 'Realistic');
+	const genPresetAbbr = $derived(
+		genPresetLabels[game.state.options?.gen_preset ?? 'standard'] ?? 'Std'
+	);
+	const genPresetTitle = $derived(
+		genPresetTitles[game.state.options?.gen_preset ?? 'standard'] ?? 'Standard'
+	);
+	const loadProfileAbbr = $derived(
+		loadProfileLabels[game.state.options?.load_profile ?? 'realistic'] ?? 'Real'
+	);
+	const loadProfileTitle = $derived(
+		loadProfileTitles[game.state.options?.load_profile ?? 'realistic'] ?? 'Realistic'
+	);
 
 	function formatTimer(seconds: number): string {
 		if (seconds < 60) return `${seconds}s`;
@@ -82,35 +109,31 @@
 
 {#snippet paymentDescription()}
 	{#if game.state.options?.payment_method === 'pay_as_offered'}
-		<strong>Pay-as-Offered:</strong> Each generator is paid its own offer price. Players must strategically mark up above cost to maximize profit.
+		<strong>Pay-as-Offered:</strong> Each generator is paid its own offer price. Players must strategically
+		mark up above cost to maximize profit.
 	{:else}
-		<strong>Last Accepted Offer:</strong> All dispatched generators are paid the clearing price (highest accepted offer). Players compete by bidding near their true cost.
+		<strong>Last Accepted Offer:</strong> All dispatched generators are paid the clearing price (highest
+		accepted offer). Players compete by bidding near their true cost.
 	{/if}
 {/snippet}
 
 {#if isOpen}
-	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-	<!-- svelte-ignore a11y_interactive_supports_focus -->
-	<div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Market Settings" onkeydown={handleKeydown} tabindex="-1" use:focusTrap>
-		<div class="modal-backdrop" onclick={close} role="presentation"></div>
-		<div class="settings-modal animate-in">
+	<Modal title="Market Settings" titleId="msm-title" maxWidth="800px" onclose={close}>
+		<div class="settings-modal">
 			<!-- Header -->
 			<div class="settings-header">
 				<div class="settings-header-inner">
-					<div class="flex items-center gap-3 min-w-0">
+					<div class="flex min-w-0 items-center gap-3">
 						<div class="settings-icon">
-							<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-								<path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
-								<path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.421 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.421-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
-							</svg>
+							<Icon name="gear" size={16} />
 						</div>
 						<div class="min-w-0">
-							<h3 class="settings-title">{marketName}</h3>
+							<h3 id="msm-title" class="settings-title">{marketName}</h3>
 							<span class="settings-subtitle">Market Settings</span>
 						</div>
 					</div>
-					<button class="settings-close" onclick={close} aria-label="Close">
-						<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+					<button class="btn-close" onclick={close} aria-label="Close">
+						<Icon name="close" size={16} />
 					</button>
 				</div>
 			</div>
@@ -120,31 +143,47 @@
 				{#if hasOptions}
 					{#if editable}
 						<!-- EDITABLE configuration (forming/full) -->
-						<div class="editable-banner">
-							Settings are editable before game starts
-						</div>
+						<div class="editable-banner">Settings are editable before game starts</div>
 
 						<!-- Game Structure -->
 						<div class="settings-section">
 							<div class="settings-section-label">Game Structure</div>
-							<div class="grid grid-cols-3 gap-3">
+							<div class="grid grid-cols-1 gap-3 min-[480px]:grid-cols-3">
 								<div>
 									<label class="edit-label" for="ms-max-players">Max Players</label>
-									<input type="number" class="edit-input" id="ms-max-players" min="2" max="99"
+									<input
+										type="number"
+										class="edit-input"
+										id="ms-max-players"
+										min="2"
+										max="99"
 										value={game.state.options?.max_participants}
-										onchange={(e) => handleNumberChange('max_participants', e)} />
+										onchange={(e) => handleNumberChange('max_participants', e, 2, 99)}
+									/>
 								</div>
 								<div>
 									<label class="edit-label" for="ms-periods">Periods</label>
-									<input type="number" class="edit-input" id="ms-periods" min="2" max="99"
+									<input
+										type="number"
+										class="edit-input"
+										id="ms-periods"
+										min="2"
+										max="99"
 										value={game.state.options?.num_periods}
-										onchange={(e) => handleNumberChange('num_periods', e)} />
+										onchange={(e) => handleNumberChange('num_periods', e, 2, 99)}
+									/>
 								</div>
 								<div>
 									<label class="edit-label" for="ms-timer">Timer (sec)</label>
-									<input type="number" class="edit-input" id="ms-timer" min="2" max="9999"
+									<input
+										type="number"
+										class="edit-input"
+										id="ms-timer"
+										min="2"
+										max="9999"
 										value={game.state.options?.auto_advance_time}
-										onchange={(e) => handleNumberChange('auto_advance_time', e)} />
+										onchange={(e) => handleNumberChange('auto_advance_time', e, 2, 9999)}
+									/>
 								</div>
 							</div>
 						</div>
@@ -155,34 +194,59 @@
 
 							<!-- Payment Method -->
 							<span class="edit-label" id="ms-payment-label">Payment Method</span>
-							<div class="flex border-[1.5px] border-border rounded overflow-hidden mb-2" role="group" aria-labelledby="ms-payment-label">
+							<div
+								class="border-border mb-2 flex overflow-hidden rounded border"
+								role="group"
+								aria-labelledby="ms-payment-label"
+							>
 								<button
-									class="flex-1 py-2 px-3 font-body text-sm font-semibold border-none border-r-[1.5px] border-r-border cursor-pointer transition-all duration-100 ease-brand {game.state.options?.payment_method === 'last_accepted_offer' ? 'bg-maroon text-text-inverse' : 'bg-white text-text-secondary hover:bg-maroon-faint hover:text-maroon'}"
+									class="font-body border-r-border ease-brand flex-1 cursor-pointer border-r-accent border-none px-3 py-2 text-sm font-semibold transition-all duration-100 {game
+										.state.options?.payment_method === 'last_accepted_offer'
+										? 'bg-maroon text-text-inverse'
+										: 'text-text-secondary hover:bg-maroon-faint hover:text-maroon bg-surface'}"
 									onclick={() => updateOption('payment_method', 'last_accepted_offer')}
 									type="button"
 									aria-pressed={game.state.options?.payment_method === 'last_accepted_offer'}
-								>LAO</button>
+									>LAO</button
+								>
 								<button
-									class="flex-1 py-2 px-3 font-body text-sm font-semibold border-none cursor-pointer transition-all duration-100 ease-brand {game.state.options?.payment_method === 'pay_as_offered' ? 'bg-maroon text-text-inverse' : 'bg-white text-text-secondary hover:bg-maroon-faint hover:text-maroon'}"
+									class="font-body ease-brand flex-1 cursor-pointer border-none px-3 py-2 text-sm font-semibold transition-all duration-100 {game
+										.state.options?.payment_method === 'pay_as_offered'
+										? 'bg-maroon text-text-inverse'
+										: 'text-text-secondary hover:bg-maroon-faint hover:text-maroon bg-surface'}"
 									onclick={() => updateOption('payment_method', 'pay_as_offered')}
 									type="button"
-									aria-pressed={game.state.options?.payment_method === 'pay_as_offered'}
-								>PAO</button>
+									aria-pressed={game.state.options?.payment_method === 'pay_as_offered'}>PAO</button
+								>
 							</div>
-							<p class="text-xs text-text-muted leading-[1.4] mb-4">{@render paymentDescription()}</p>
+							<p class="text-text-muted mb-4 text-xs leading-[1.4]">
+								{@render paymentDescription()}
+							</p>
 
 							<div class="grid grid-cols-2 gap-3">
 								<div>
 									<label class="edit-label" for="ms-max-offer">Max Offer Price</label>
-									<input type="number" class="edit-input" id="ms-max-offer" min="1" max="9999"
+									<input
+										type="number"
+										class="edit-input"
+										id="ms-max-offer"
+										min="1"
+										max="9999"
 										value={game.state.options?.max_offer_price}
-										onchange={(e) => handleNumberChange('max_offer_price', e)} />
+										onchange={(e) => handleNumberChange('max_offer_price', e)}
+									/>
 								</div>
 								<div>
 									<label class="edit-label" for="ms-starting-money">Starting Money</label>
-									<input type="number" class="edit-input" id="ms-starting-money" min="0" max="999999"
+									<input
+										type="number"
+										class="edit-input"
+										id="ms-starting-money"
+										min="0"
+										max="999999"
 										value={game.state.options?.starting_money}
-										onchange={(e) => handleNumberChange('starting_money', e)} />
+										onchange={(e) => handleNumberChange('starting_money', e, 0, 999999)}
+									/>
 								</div>
 							</div>
 						</div>
@@ -193,51 +257,95 @@
 
 							<!-- Generator Preset -->
 							<span class="edit-label" id="ms-gen-label">Generator Portfolio</span>
-							<div class="grid grid-cols-3 gap-2 mb-4" role="group" aria-labelledby="ms-gen-label">
-								{#each (['standard', 'simple', 'competitive'] as const) as preset}
+							<div class="mb-4 grid grid-cols-3 gap-2" role="group" aria-labelledby="ms-gen-label">
+								{#each ['standard', 'simple', 'competitive'] as const as preset}
 									<button
-										class="preset-btn {game.state.options?.gen_preset === preset ? 'preset-btn--active' : ''}"
+										class="preset-btn {game.state.options?.gen_preset === preset
+											? 'preset-btn--active'
+											: ''}"
 										onclick={() => updateOption('gen_preset', preset)}
 										type="button"
 										aria-pressed={game.state.options?.gen_preset === preset}
 									>
-										<span class="font-bold text-xs">{preset === 'standard' ? 'Standard' : preset === 'simple' ? 'Simple' : 'Competitive'}</span>
-										<span class="text-[11px] text-text-muted font-mono">{preset === 'standard' ? '5 gens' : preset === 'simple' ? '3 gens' : '7 gens'}</span>
+										<span class="text-xs font-bold"
+											>{preset === 'standard'
+												? 'Standard'
+												: preset === 'simple'
+													? 'Simple'
+													: 'Competitive'}</span
+										>
+										<span class="text-text-muted font-mono text-[11px]"
+											>{preset === 'standard'
+												? '5 gens'
+												: preset === 'simple'
+													? '3 gens'
+													: '7 gens'}</span
+										>
 									</button>
 								{/each}
 							</div>
 
 							<!-- Load Profile -->
 							<span class="edit-label" id="ms-demand-label">Demand Profile</span>
-							<div class="grid grid-cols-4 gap-2 mb-4" role="group" aria-labelledby="ms-demand-label">
-								{#each (['realistic', 'flat', 'peak', 'volatile'] as const) as profile}
+							<div
+								class="mb-4 grid grid-cols-2 gap-2 min-[480px]:grid-cols-4"
+								role="group"
+								aria-labelledby="ms-demand-label"
+							>
+								{#each ['realistic', 'flat', 'peak', 'volatile'] as const as profile}
 									<button
-										class="preset-btn {game.state.options?.load_profile === profile ? 'preset-btn--active' : ''}"
+										class="preset-btn {game.state.options?.load_profile === profile
+											? 'preset-btn--active'
+											: ''}"
 										onclick={() => updateOption('load_profile', profile)}
 										type="button"
 										aria-pressed={game.state.options?.load_profile === profile}
 									>
-										<span class="font-bold text-xs capitalize">{profile}</span>
+										<span class="text-xs font-bold capitalize">{profile}</span>
 									</button>
 								{/each}
 							</div>
 
 							<div class="grid grid-cols-2 gap-3">
 								<div>
-									<label class="edit-label" for="ms-scarcity" title="When demand exceeds total supply, override clearing price to this value. 0 = disabled.">Scarcity Price</label>
-									<input type="number" class="edit-input" id="ms-scarcity" min="0" max="99999"
+									<label
+										class="edit-label"
+										for="ms-scarcity"
+										>Scarcity Price</label
+									>
+									<input
+										type="number"
+										class="edit-input"
+										id="ms-scarcity"
+										min="0"
+										max="99999"
 										value={game.state.options?.scarcity_price ?? 0}
-										onchange={(e) => handleNumberChange('scarcity_price', e)}
-										aria-describedby="ms-scarcity-hint" />
-									<span class="text-[11px] text-text-muted mt-0.5 block" id="ms-scarcity-hint">0 = disabled</span>
+										onchange={(e) => handleNumberChange('scarcity_price', e, 0, 99999)}
+										aria-describedby="ms-scarcity-hint"
+									/>
+									<span class="text-text-muted mt-0.5 block text-[11px]" id="ms-scarcity-hint"
+										>Overrides clearing price when demand exceeds supply. 0 = disabled.</span
+									>
 								</div>
 								<div>
-									<label class="edit-label" for="ms-jitter" title="Random +/- variation applied to each period's load. 0 = exact profile.">Load Jitter (%)</label>
-									<input type="number" class="edit-input" id="ms-jitter" min="0" max="30"
+									<label
+										class="edit-label"
+										for="ms-jitter"
+										>Load Jitter (%)</label
+									>
+									<input
+										type="number"
+										class="edit-input"
+										id="ms-jitter"
+										min="0"
+										max="30"
 										value={game.state.options?.load_jitter ?? 0}
-										onchange={(e) => handleNumberChange('load_jitter', e)}
-										aria-describedby="ms-jitter-hint" />
-									<span class="text-[11px] text-text-muted mt-0.5 block" id="ms-jitter-hint">0 = exact profile</span>
+										onchange={(e) => handleNumberChange('load_jitter', e, 0, 30)}
+										aria-describedby="ms-jitter-hint"
+									/>
+									<span class="text-text-muted mt-0.5 block text-[11px]" id="ms-jitter-hint"
+										>Random +/- variation on each period's load. 0 = exact profile.</span
+									>
 								</div>
 							</div>
 						</div>
@@ -255,7 +363,9 @@
 									<span class="config-label">Periods</span>
 								</div>
 								<div class="config-cell">
-									<span class="config-value">{formatTimer(game.state.options?.auto_advance_time ?? 180)}</span>
+									<span class="config-value"
+										>{formatTimer(game.state.options?.auto_advance_time ?? 180)}</span
+									>
 									<span class="config-label">Timer</span>
 								</div>
 								<div class="config-cell" title={paymentLabel}>
@@ -281,15 +391,28 @@
 									<span class="config-value">${game.state.options?.starting_money}</span>
 									<span class="config-label">Start $</span>
 								</div>
-								<div class="config-cell" title={(game.state.options?.scarcity_price ?? 0) > 0 ? `$${game.state.options?.scarcity_price}/MW` : 'Disabled'}>
-									<span class="config-value">{(game.state.options?.scarcity_price ?? 0) > 0 ? `$${game.state.options?.scarcity_price}` : 'Off'}</span>
+								<div
+									class="config-cell"
+									title={(game.state.options?.scarcity_price ?? 0) > 0
+										? `$${game.state.options?.scarcity_price}/MW`
+										: 'Disabled'}
+								>
+									<span class="config-value"
+										>{(game.state.options?.scarcity_price ?? 0) > 0
+											? `$${game.state.options?.scarcity_price}`
+											: 'Off'}</span
+									>
 									<span class="config-label">Scarcity</span>
 								</div>
 							</div>
 							{#if (game.state.options?.load_jitter ?? 0) > 0}
-								<p class="text-[11px] text-text-muted mt-2 px-1">Load jitter: +/-{game.state.options?.load_jitter}%</p>
+								<p class="text-text-muted mt-2 px-1 text-[11px]">
+									Load jitter: +/-{game.state.options?.load_jitter}%
+								</p>
 							{/if}
-							<p class="text-xs text-text-muted mt-2 leading-[1.4] px-1">{@render paymentDescription()}</p>
+							<p class="text-text-muted mt-2 px-1 text-xs leading-[1.4]">
+								{@render paymentDescription()}
+							</p>
 						</div>
 					{/if}
 				{/if}
@@ -299,11 +422,28 @@
 					<div class="settings-section-label">Visibility</div>
 					<div class="settings-row">
 						<div class="settings-row-info">
-							<div class="settings-row-icon" class:settings-row-icon--active={game.state.visibility === 'public'}>
+							<div
+								class="settings-row-icon"
+								class:settings-row-icon--active={game.state.visibility === 'public'}
+							>
 								{#if game.state.visibility === 'public'}
-									<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/></svg>
+									<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"
+										><path
+											d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"
+										/><path
+											d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"
+										/></svg
+									>
 								{:else}
-									<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299l.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884l-12-12 .708-.708 12 12-.708.708z"/></svg>
+									<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"
+										><path
+											d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"
+										/><path
+											d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299l.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"
+										/><path
+											d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884l-12-12 .708-.708 12 12-.708.708z"
+										/></svg
+									>
 								{/if}
 							</div>
 							<div>
@@ -311,12 +451,20 @@
 									{game.state.visibility === 'public' ? 'Public' : 'Unlisted'}
 								</span>
 								<span class="settings-row-desc">
-									{game.state.visibility === 'public' ? 'Visible in the player market browser' : 'Only accessible via direct link'}
+									{game.state.visibility === 'public'
+										? 'Visible in the player market browser'
+										: 'Only accessible via direct link'}
 								</span>
 							</div>
 						</div>
 						<label class="toggle">
-							<input type="checkbox" role="switch" checked={game.state.visibility === 'public'} onclick={toggleVisibility} aria-label="Toggle visibility" />
+							<input
+								type="checkbox"
+								role="switch"
+								checked={game.state.visibility === 'public'}
+								onclick={toggleVisibility}
+								aria-label="Toggle visibility"
+							/>
 						</label>
 					</div>
 				</div>
@@ -328,11 +476,18 @@
 					<div class="danger-actions">
 						{#if canReset}
 							{#if !showResetConfirm}
-								<button class="danger-action" onclick={() => { showResetConfirm = true; }}>
+								<button
+									class="danger-action"
+									onclick={() => {
+										showResetConfirm = true;
+									}}
+								>
 									<div class="danger-action-icon">
 										<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-											<path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-											<path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+											<path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
+											<path
+												d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"
+											/>
 										</svg>
 									</div>
 									<div>
@@ -344,8 +499,16 @@
 								<div class="danger-confirm">
 									<p class="danger-confirm-msg">Reset all game data? This cannot be undone.</p>
 									<div class="danger-confirm-btns">
-										<button class="btn btn-secondary btn-sm" onclick={() => { showResetConfirm = false; }}>Cancel</button>
-										<button class="btn btn-sm bg-danger text-text-inverse border-danger hover:brightness-90" onclick={executeReset}>Confirm Reset</button>
+										<button
+											class="btn btn-secondary btn-sm"
+											onclick={() => {
+												showResetConfirm = false;
+											}}>Cancel</button
+										>
+										<button
+											class="btn btn-sm bg-danger text-text-inverse border-danger hover:brightness-90"
+											onclick={executeReset}>Confirm Reset</button
+										>
 									</div>
 								</div>
 							{/if}
@@ -355,13 +518,20 @@
 							<button class="danger-action danger-action--delete" onclick={handleDelete}>
 								<div class="danger-action-icon danger-action-icon--delete">
 									<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-										<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-										<path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H5.5l1-1h3l1 1h2a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+										<path
+											d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"
+										/>
+										<path
+											fill-rule="evenodd"
+											d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H5.5l1-1h3l1 1h2a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
+										/>
 									</svg>
 								</div>
 								<div>
 									<span class="danger-action-title">Delete Market</span>
-									<span class="danger-action-desc">Permanently destroy this market and all data</span>
+									<span class="danger-action-desc"
+										>Permanently destroy this market and all data</span
+									>
 								</div>
 							</button>
 						{/if}
@@ -369,24 +539,18 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	</Modal>
 {/if}
 
 <style>
 	/* ---- Modal shell ---- */
 	.settings-modal {
-		position: relative;
-		z-index: 1;
 		width: 100%;
 		max-width: 480px;
 		max-height: 90vh;
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
-		background: white;
-		border: 1px solid var(--color-border-light);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-lg);
 	}
 
 	/* ---- Header ---- */
@@ -406,7 +570,7 @@
 		justify-content: space-between;
 		gap: 1rem;
 		padding: 0.875rem 1.25rem;
-		background: white;
+		background: var(--color-surface);
 	}
 	.settings-icon {
 		width: 36px;
@@ -421,7 +585,7 @@
 	}
 	.settings-title {
 		margin: 0;
-		font-size: 1rem;
+		font-size: var(--text-base);
 		line-height: 1.2;
 		font-family: var(--font-display);
 		font-weight: 600;
@@ -433,32 +597,13 @@
 	.settings-subtitle {
 		display: block;
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: var(--text-micro);
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-brand);
 		color: var(--color-text-muted);
 		margin-top: 1px;
 	}
-	.settings-close {
-		width: 32px;
-		height: 32px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border: none;
-		background: transparent;
-		color: var(--color-text-muted);
-		border-radius: var(--radius-sm);
-		cursor: pointer;
-		transition: all 150ms var(--ease-brand);
-		flex-shrink: 0;
-	}
-	.settings-close:hover {
-		background: var(--color-cream-dark);
-		color: var(--color-text-primary);
-	}
-
 	/* ---- Body ---- */
 	.settings-body {
 		display: flex;
@@ -471,7 +616,7 @@
 	/* ---- Editable banner ---- */
 	.editable-banner {
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: var(--text-micro);
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-section);
@@ -492,7 +637,7 @@
 	}
 	.settings-section-label {
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: var(--text-micro);
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-section);
@@ -507,7 +652,7 @@
 	.edit-label {
 		display: block;
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: var(--text-micro);
 		font-weight: 600;
 		color: var(--color-text-secondary);
 		margin-bottom: 4px;
@@ -516,13 +661,15 @@
 		width: 100%;
 		padding: 0.5rem 0.625rem;
 		font-family: var(--font-mono);
-		font-size: 0.8125rem;
+		font-size: var(--text-compact);
 		font-weight: 600;
 		color: var(--color-text-primary);
 		background: var(--color-cream);
-		border: 1.5px solid var(--color-border-light);
+		border: var(--border-width-accent) solid var(--color-border-light);
 		border-radius: var(--radius-sm);
-		transition: all 150ms var(--ease-brand);
+		transition:
+			border-color 150ms var(--ease-brand),
+			box-shadow 150ms var(--ease-brand);
 		box-sizing: border-box;
 	}
 	.edit-input:focus {
@@ -538,11 +685,14 @@
 		align-items: center;
 		gap: 1px;
 		padding: 0.5rem 0.375rem;
-		border: 1.5px solid var(--color-border-light);
+		border: var(--border-width-accent) solid var(--color-border-light);
 		border-radius: var(--radius-sm);
-		background: white;
+		background: var(--color-surface);
 		cursor: pointer;
-		transition: all 100ms var(--ease-brand);
+		transition:
+			border-color 100ms var(--ease-brand),
+			background 100ms var(--ease-brand),
+			box-shadow 100ms var(--ease-brand);
 		font-family: var(--font-body);
 	}
 	.preset-btn:hover {
@@ -580,14 +730,14 @@
 	}
 	.config-value {
 		font-family: var(--font-mono);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 700;
 		color: var(--color-text-primary);
 		line-height: 1.2;
 	}
 	.config-label {
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: var(--text-micro);
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-brand);
@@ -595,9 +745,15 @@
 	}
 
 	@media (max-width: 440px) {
-		.config-grid { grid-template-columns: repeat(2, 1fr); }
-		.config-cell:nth-child(even) { border-right: none; }
-		.config-cell:not(:nth-last-child(-n+2)) { border-bottom: 1px solid var(--color-border-light); }
+		.config-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+		.config-cell:nth-child(even) {
+			border-right: none;
+		}
+		.config-cell:not(:nth-last-child(-n + 2)) {
+			border-bottom: 1px solid var(--color-border-light);
+		}
 	}
 
 	/* ---- Settings row ---- */
@@ -627,7 +783,9 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		transition: all 200ms var(--ease-brand);
+		transition:
+			background 200ms var(--ease-brand),
+			color 200ms var(--ease-brand);
 	}
 	.settings-row-icon--active {
 		background: var(--color-maroon-faint);
@@ -636,7 +794,7 @@
 	.settings-row-title {
 		display: block;
 		font-family: var(--font-body);
-		font-size: 0.8125rem;
+		font-size: var(--text-compact);
 		font-weight: 600;
 		color: var(--color-text-primary);
 		line-height: 1.2;
@@ -644,7 +802,7 @@
 	.settings-row-desc {
 		display: block;
 		font-family: var(--font-body);
-		font-size: 11px;
+		font-size: var(--text-micro);
 		color: var(--color-text-muted);
 		margin-top: 1px;
 	}
@@ -666,13 +824,15 @@
 		gap: 0.75rem;
 		width: 100%;
 		padding: 0.625rem 0.75rem;
-		background: white;
+		background: var(--color-surface);
 		border: 1px solid var(--color-border-light);
 		border-radius: var(--radius-sm);
 		cursor: pointer;
 		text-align: left;
 		font-family: var(--font-body);
-		transition: all 150ms var(--ease-brand);
+		transition:
+			border-color 150ms var(--ease-brand),
+			background 150ms var(--ease-brand);
 	}
 	.danger-action:hover {
 		border-color: var(--color-danger);
@@ -692,7 +852,9 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		transition: all 150ms var(--ease-brand);
+		transition:
+			background 150ms var(--ease-brand),
+			color 150ms var(--ease-brand);
 	}
 	.danger-action:hover .danger-action-icon {
 		background: var(--color-danger-bg);
@@ -705,14 +867,14 @@
 
 	.danger-action-title {
 		display: block;
-		font-size: 0.8125rem;
+		font-size: var(--text-compact);
 		font-weight: 600;
 		color: var(--color-text-primary);
 		line-height: 1.2;
 	}
 	.danger-action-desc {
 		display: block;
-		font-size: 11px;
+		font-size: var(--text-micro);
 		color: var(--color-text-muted);
 		margin-top: 1px;
 	}
@@ -725,7 +887,7 @@
 		border-radius: var(--radius-sm);
 	}
 	.danger-confirm-msg {
-		font-size: 0.8125rem;
+		font-size: var(--text-compact);
 		font-weight: 500;
 		color: var(--color-warning-text);
 		margin: 0 0 0.75rem;
@@ -735,5 +897,4 @@
 		gap: 0.5rem;
 		justify-content: flex-end;
 	}
-
 </style>

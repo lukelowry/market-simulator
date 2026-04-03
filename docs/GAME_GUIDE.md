@@ -17,16 +17,16 @@ The goal: maximize your total money across all periods.
    - Results show each generator's dispatch, revenue, costs, and profit.
 5. **Game ends** after all periods are played. Final rankings are displayed.
 
-> **Period timing note:** Market clearing for period N happens when the game advances *to* period N+1. The first advance (period 0 to 1) opens play but does not clear. Players submit offers during the current period; those offers are used when the period advances.
+> **Period timing note:** Market clearing for period N happens when the game advances _to_ period N+1. The first advance (period 0 to 1) opens play but does not clear. Players submit offers during the current period; those offers are used when the period advances.
 
 ### Game States
 
-| State | Description |
-|-------|-------------|
-| **Forming** | Lobby is open; players can join. |
-| **Full** | Max players reached; no more can join (admin can still start). |
-| **Running** | Periods are being played. |
-| **Completed** | All periods finished; results are final. |
+| State         | Description                                                    |
+| ------------- | -------------------------------------------------------------- |
+| **Forming**   | Lobby is open; players can join.                               |
+| **Full**      | Max players reached; no more can join (admin can still start). |
+| **Running**   | Periods are being played.                                      |
+| **Completed** | All periods finished; results are final.                       |
 
 ## Market Clearing (Merit Order Dispatch)
 
@@ -79,12 +79,12 @@ This models pay-as-bid auctions. Key strategic implications:
 
 ### Comparison
 
-| Aspect | LAO (Uniform) | PAO (Discriminatory) |
-|--------|--------------|---------------------|
-| Payment basis | Clearing price (marginal cost) | Each generator's own offer |
-| Low-cost generator surplus | Yes — paid above their offer | No — paid exactly their offer |
-| Optimal strategy | Offer near true cost | Offer above cost, estimate clearing price |
-| Real-world analogue | ERCOT, PJM, most U.S. ISOs | UK electricity market (pre-NETA), some gas markets |
+| Aspect                     | LAO (Uniform)                  | PAO (Discriminatory)                               |
+| -------------------------- | ------------------------------ | -------------------------------------------------- |
+| Payment basis              | Clearing price (marginal cost) | Each generator's own offer                         |
+| Low-cost generator surplus | Yes — paid above their offer   | No — paid exactly their offer                      |
+| Optimal strategy           | Offer near true cost           | Offer above cost, estimate clearing price          |
+| Real-world analogue        | ERCOT, PJM, most U.S. ISOs     | UK electricity market (pre-NETA), some gas markets |
 
 ## Financial Calculations
 
@@ -104,32 +104,32 @@ Each player receives an identical portfolio based on the selected preset.
 ### Standard (5 generators, 100 MW total)
 
 | Capacity | Production Cost |
-|----------|----------------|
-| 50 MW | $20/MW |
-| 20 MW | $30/MW |
-| 10 MW | $40/MW |
-| 10 MW | $50/MW |
-| 10 MW | $65/MW |
+| -------- | --------------- |
+| 50 MW    | $20/MW          |
+| 20 MW    | $30/MW          |
+| 10 MW    | $40/MW          |
+| 10 MW    | $50/MW          |
+| 10 MW    | $65/MW          |
 
 ### Simple (3 generators, 100 MW total)
 
 | Capacity | Production Cost |
-|----------|----------------|
-| 50 MW | $20/MW |
-| 30 MW | $35/MW |
-| 20 MW | $55/MW |
+| -------- | --------------- |
+| 50 MW    | $20/MW          |
+| 30 MW    | $35/MW          |
+| 20 MW    | $55/MW          |
 
 ### Competitive (7 generators, 100 MW total)
 
 | Capacity | Production Cost |
-|----------|----------------|
-| 30 MW | $15/MW |
-| 20 MW | $25/MW |
-| 15 MW | $30/MW |
-| 10 MW | $40/MW |
-| 10 MW | $50/MW |
-| 10 MW | $60/MW |
-| 5 MW  | $75/MW |
+| -------- | --------------- |
+| 30 MW    | $15/MW          |
+| 20 MW    | $25/MW          |
+| 15 MW    | $30/MW          |
+| 10 MW    | $40/MW          |
+| 10 MW    | $50/MW          |
+| 10 MW    | $60/MW          |
+| 5 MW     | $75/MW          |
 
 ### Default Offers
 
@@ -149,15 +149,19 @@ Load (demand) varies each period based on a 24-hour cycle that repeats. The form
 Each player contributes a base of 100 MW of potential demand, scaled by the profile.
 
 ### Realistic
+
 Models a typical daily demand curve with morning and evening peaks and an overnight valley. Multipliers range from ~0.44 to ~0.85.
 
 ### Flat
+
 Constant demand at 65% of capacity every period. Useful for isolating pricing strategy from demand variability.
 
 ### Peak
+
 Extreme peaks (up to 95%) and deep valleys (down to 30%). Tests how players respond to dramatic demand swings.
 
 ### Volatile
+
 Demand jumps unpredictably between 30% and 95% with no smooth pattern. Tests adaptability under uncertainty.
 
 ### Load Cycling

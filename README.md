@@ -9,6 +9,7 @@ npm install
 ```
 
 Create `.dev.vars` in the project root:
+
 ```
 ADMIN_PASSWORD=your-password-here
 ```
@@ -25,6 +26,7 @@ npm run dev:worker      # terminal 2
 Push to `main` deploys automatically via [Cloudflare Git integration](https://developers.cloudflare.com/workers/ci-cd/builds/).
 
 Set your production admin password once:
+
 ```bash
 npx wrangler secret put ADMIN_PASSWORD
 ```

@@ -12,27 +12,28 @@ class ConnectionState {
 	connectionError = $state<string | null>(null);
 	role = $state<'admin' | 'participant' | null>(null);
 	participantName = $state('');
-	uin = $state('');
 	marketName = $state('');
 	playerToken = $state('');
 	adminKey = $state('');
 	logoutHandler = $state<(() => void) | null>(null);
 	reconnecting = $state(false);
 	disconnectedAt = $state<number | null>(null);
+	/** Transient error from a rejected action (e.g. stale offer). Auto-cleared after display. */
+	lastActionError = $state<string | null>(null);
 
-	/** Reset all fields to defaults. Used by disconnect/softDisconnect. */
+	/** Reset all fields to defaults. Used by disconnect. */
 	reset() {
 		this.connected = false;
 		this.connectionError = null;
 		this.role = null;
 		this.participantName = '';
-		this.uin = '';
 		this.marketName = '';
 		this.playerToken = '';
 		this.adminKey = '';
 		this.logoutHandler = null;
 		this.reconnecting = false;
 		this.disconnectedAt = null;
+		this.lastActionError = null;
 	}
 }
 

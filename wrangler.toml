@@ -24,3 +24,14 @@ new_sqlite_classes = ["MarketRoom"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["MarketRegistry"]
+
+[env.preview]
+name = "market-simulator-preview"
+
+[[env.preview.durable_objects.bindings]]
+name = "MARKET_ROOM"
+class_name = "MarketRoom"
+
+[[env.preview.durable_objects.bindings]]
+name = "MARKET_REGISTRY"
+class_name = "MarketRegistry"

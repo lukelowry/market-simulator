@@ -1,27 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { game } from '$lib/stores/gameStore.svelte.js';
-	import { CHART_MAROON, CHART_GOLD, CHART_GOLD_FILL, CHART_TEXT_SECONDARY, CHART_TEXT_MUTED, CHART_TOOLTIP_BG } from '$lib/utils/chartTheme.js';
+	import Icon from '$lib/components/shared/Icon.svelte';
 	import {
 		Chart,
-		BarController,
-		BarElement,
-		LineController,
-		LineElement,
-		PointElement,
-		LinearScale,
-		CategoryScale,
-		Legend,
-		Tooltip,
-		Filler
-	} from 'chart.js';
-
-	Chart.register(
-		BarController, BarElement,
-		LineController, LineElement, PointElement,
-		LinearScale, CategoryScale,
-		Legend, Tooltip, Filler
-	);
+		CHART_MAROON,
+		CHART_MAROON_LIGHT,
+		CHART_GOLD,
+		CHART_GOLD_FILL,
+		CHART_TEXT_SECONDARY,
+		CHART_TEXT_MUTED,
+		CHART_TOOLTIP_BG,
+		CHART_CARD_BG,
+		CHART_GRID,
+		CHART_FONT_BODY,
+		CHART_FONT_MONO
+	} from '$lib/utils/chartTheme.js';
 
 	let canvas: HTMLCanvasElement | undefined;
 	let chart = $state<Chart | null>(null);
@@ -51,12 +45,12 @@
 						label: 'Clearing Price ($/MWh)',
 						data: [],
 						borderColor: CHART_MAROON,
-						backgroundColor: 'rgba(80, 0, 0, 0.08)',
+						backgroundColor: CHART_MAROON_LIGHT,
 						borderWidth: 2.5,
 						tension: 0.3,
 						pointRadius: 4,
 						pointBackgroundColor: CHART_MAROON,
-						pointBorderColor: '#fff',
+						pointBorderColor: CHART_CARD_BG,
 						pointBorderWidth: 2,
 						pointHoverRadius: 6,
 						fill: false,
@@ -77,7 +71,7 @@
 						position: 'top',
 						align: 'end',
 						labels: {
-							font: { family: "'Source Sans 3', sans-serif", size: 12, weight: 600 },
+							font: { family: CHART_FONT_BODY, size: 12, weight: 600 },
 							color: CHART_TEXT_SECONDARY,
 							usePointStyle: true,
 							pointStyle: 'circle',
@@ -86,8 +80,8 @@
 					},
 					tooltip: {
 						backgroundColor: CHART_TOOLTIP_BG,
-						titleFont: { family: "'Source Sans 3', sans-serif", size: 13 },
-						bodyFont: { family: "'JetBrains Mono', monospace", size: 12 },
+						titleFont: { family: CHART_FONT_BODY, size: 13 },
+						bodyFont: { family: CHART_FONT_MONO, size: 12 },
 						padding: 12,
 						cornerRadius: 8,
 						callbacks: {
@@ -108,11 +102,11 @@
 						title: {
 							display: true,
 							text: 'Period',
-							font: { family: "'Source Sans 3', sans-serif", size: 12, weight: 600 },
+							font: { family: CHART_FONT_BODY, size: 12, weight: 600 },
 							color: CHART_TEXT_MUTED
 						},
 						ticks: {
-							font: { family: "'JetBrains Mono', monospace", size: 11 },
+							font: { family: CHART_FONT_MONO, size: 11 },
 							color: CHART_TEXT_MUTED,
 							maxRotation: 0,
 							autoSkip: true,
@@ -127,15 +121,17 @@
 						title: {
 							display: true,
 							text: 'Load (MW)',
-							font: { family: "'Source Sans 3', sans-serif", size: 12, weight: 600 },
+							font: { family: CHART_FONT_BODY, size: 12, weight: 600 },
 							color: CHART_GOLD
 						},
 						ticks: {
-							font: { family: "'JetBrains Mono', monospace", size: 11 },
+							font: { family: CHART_FONT_MONO, size: 11 },
 							color: CHART_GOLD,
-							callback(value) { return value + ' MW'; }
+							callback(value) {
+								return value + ' MW';
+							}
 						},
-						grid: { color: 'rgba(0, 0, 0, 0.04)' },
+						grid: { color: CHART_GRID },
 						border: { display: false },
 						beginAtZero: true
 					},
@@ -145,13 +141,15 @@
 						title: {
 							display: true,
 							text: 'Price ($/MWh)',
-							font: { family: "'Source Sans 3', sans-serif", size: 12, weight: 600 },
+							font: { family: CHART_FONT_BODY, size: 12, weight: 600 },
 							color: CHART_MAROON
 						},
 						ticks: {
-							font: { family: "'JetBrains Mono', monospace", size: 11 },
+							font: { family: CHART_FONT_MONO, size: 11 },
 							color: CHART_MAROON,
-							callback(value) { return '$' + value; }
+							callback(value) {
+								return '$' + value;
+							}
 						},
 						grid: { display: false },
 						border: { display: false },
@@ -161,45 +159,53 @@
 			}
 		});
 
-		return () => { chart?.destroy(); chart = null; };
+		return () => {
+			chart?.destroy();
+			chart = null;
+		};
 	});
 
 	$effect(() => {
 		if (!chart) return;
 
-		const periods = game.state.periods.filter(p => p.marginal_cost !== null);
+		const periods = game.state.periods.filter((p) => p.marginal_cost !== null);
 		hasData = periods.length > 0;
 
-		chart.data.labels = periods.map(p => `P${p.number}`);
-		chart.data.datasets[0].data = periods.map(p => p.load);
-		chart.data.datasets[1].data = periods.map(p => p.marginal_cost);
+		chart.data.labels = periods.map((p) => `P${p.number}`);
+		chart.data.datasets[0].data = periods.map((p) => p.load);
+		chart.data.datasets[1].data = periods.map((p) => p.marginal_cost);
 		chart.update();
 	});
 </script>
 
-<section class="card border-t-3 border-t-gold">
-	<div class="card-header">Market History</div>
-	<div class="card-body py-4 px-5">
-		<div class="relative h-[280px]" class:hidden={!hasData}>
-			<canvas bind:this={canvas} aria-label="Bar and line chart showing load and clearing price per period"></canvas>
+<section class="card border-t-gold border-t-3">
+	<h3 class="card-header">Market History</h3>
+	<div class="card-body px-5 py-4">
+		<div class="relative h-[clamp(220px,30vw,360px)]" class:hidden={!hasData}>
+			<!-- svelte-ignore a11y_no_interactive_element_to_noninteractive_role -->
+			<canvas
+				bind:this={canvas}
+				role="img"
+				aria-label="Bar and line chart showing load and clearing price per period"
+			></canvas>
 		</div>
 		{#if !hasData}
-			<div class="flex flex-col items-center justify-center text-center py-12 px-8 min-h-[280px]">
-				<svg class="text-text-muted opacity-20" width="48" height="48" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-					<path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5h-2v12h2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zM1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z"/>
-				</svg>
-				<h4 class="mt-4 mb-2 text-text-secondary text-lg">No Market Data Yet</h4>
-				<p class="text-sm text-text-muted max-w-[320px] m-0">Price and load trends will appear as periods clear.</p>
+			<div class="flex min-h-[280px] flex-col items-center justify-center px-8 py-12 text-center">
+				<Icon name="chart-bars" size={48} class="text-gold opacity-25" />
+				<h4 class="text-text-secondary mt-4 mb-2 text-lg">No Market Data Yet</h4>
+				<p class="text-text-muted m-0 max-w-[320px] text-sm">
+					Price and load trends will appear as periods clear.
+				</p>
 			</div>
 		{/if}
 		{#if hasData}
 			<table class="sr-only">
 				<caption>Market History: Load and Clearing Price per Period</caption>
 				<thead>
-					<tr><th>Period</th><th>Load (MW)</th><th>Clearing Price ($/MWh)</th></tr>
+					<tr><th scope="col">Period</th><th scope="col">Load (MW)</th><th scope="col">Clearing Price ($/MWh)</th></tr>
 				</thead>
 				<tbody>
-					{#each game.state.periods.filter(p => p.marginal_cost !== null) as period}
+					{#each game.state.periods.filter((p) => p.marginal_cost !== null) as period}
 						<tr>
 							<td>{period.number}</td>
 							<td>{period.load}</td>

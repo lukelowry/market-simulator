@@ -7,11 +7,10 @@
 
 const STATES: Record<string, { label: string; badge: string; abbr: string }> = {
 	uninitialized: { label: 'Not Started', badge: 'badge-muted', abbr: 'New' },
-	forming:       { label: 'Open for Players', badge: 'badge-success', abbr: 'Open' },
-	full:          { label: 'Full', badge: 'badge-warning', abbr: 'Full' },
-	running:       { label: 'In Progress', badge: 'badge-info', abbr: 'Live' },
-	completed:     { label: 'Completed', badge: 'badge-maroon', abbr: 'Done' },
-	connecting:    { label: 'Connecting', badge: 'badge-muted', abbr: '...' }
+	forming: { label: 'Open for Players', badge: 'badge-success', abbr: 'Open' },
+	running: { label: 'In Progress', badge: 'badge-info', abbr: 'Live' },
+	completed: { label: 'Completed', badge: 'badge-maroon', abbr: 'Done' },
+	connecting: { label: 'Connecting', badge: 'badge-muted', abbr: '...' }
 };
 
 /** Human-readable label for display in headers and status text. */

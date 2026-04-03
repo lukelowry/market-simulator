@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { connection } from '$lib/stores/connectionStore.svelte.js';
-	import { connect, loadSession } from '$lib/services/websocket.js';
-	import LandingView from '$lib/components/LandingView.svelte';
-	import PlayerView from '$lib/components/PlayerView.svelte';
+	import { connect, loadSession } from '$lib/websocket.js';
+	import LandingView from '$lib/components/shared/LandingView.svelte';
+	import PlayerView from '$lib/components/player/PlayerView.svelte';
 	import AdminDashboard from '$lib/components/admin/AdminDashboard.svelte';
 
 	let restoringSession = $state(true);

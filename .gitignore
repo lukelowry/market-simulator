@@ -28,3 +28,9 @@ dist-worker/
 
 # Generated worker entry (adapter-cloudflare overwrites, patch-worker.js appends DO exports)
 worker-entry.ts
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

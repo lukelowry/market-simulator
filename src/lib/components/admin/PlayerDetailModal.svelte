@@ -1,10 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { game } from '$lib/stores/gameStore.svelte.js';
-	import { send } from '$lib/services/websocket.js';
-	import { focusTrap } from '$lib/utils/focusTrap.js';
+	import { send } from '$lib/websocket.js';
+	import Modal from '$lib/components/shared/Modal.svelte';
 	import ConfirmModal from '$lib/components/shared/ConfirmModal.svelte';
+	import Icon from '$lib/components/shared/Icon.svelte';
 
 	let { playerId, onclose }: { playerId: string; onclose: () => void } = $props();
+
+	let closeBtn: HTMLButtonElement | undefined;
+	onMount(() => closeBtn?.focus());
 
 	let customReward = $state('');
 	let showKickConfirm = $state(false);
@@ -12,14 +17,12 @@
 	const player = $derived(game.state.players[playerId]);
 	const online = $derived(game.state.connectedClients?.includes(playerId) ?? false);
 	const isRunningOrCompleted = $derived(game.isActive);
-	const isFormingOrFull = $derived(game.state.state === 'forming' || game.state.state === 'full');
+	const isForming = $derived(game.state.state === 'forming');
 
-	const playerGens = $derived(
-		Object.values(game.state.gens).filter(g => g.owner === playerId)
-	);
+	const playerGens = $derived(Object.values(game.state.gens).filter((g) => g.owner === playerId));
 
 	const periodData = $derived.by(() => {
-		return game.state.periods.map(p => ({
+		return game.state.periods.map((p) => ({
 			number: p.number,
 			load: p.load,
 			marginal: p.marginal_cost,
@@ -30,14 +33,19 @@
 		}));
 	});
 
+	let rewardCooldown = $state(false);
+
 	function rewardPlayer(amount: number) {
+		if (rewardCooldown) return;
+		rewardCooldown = true;
 		send({ type: 'rewardPlayer', payload: { playerId, amount } });
+		setTimeout(() => { rewardCooldown = false; }, 500);
 	}
 
 	function rewardCustom() {
 		const amt = parseInt(customReward);
 		if (!amt || isNaN(amt)) return;
-		send({ type: 'rewardPlayer', payload: { playerId, amount: amt } });
+		rewardPlayer(amt);
 		customReward = '';
 	}
 
@@ -46,63 +54,91 @@
 		showKickConfirm = false;
 		onclose();
 	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape' && !showKickConfirm) onclose();
-	}
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<!-- svelte-ignore a11y_interactive_supports_focus -->
-<div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Player details" onkeydown={handleKeydown} tabindex="-1" use:focusTrap>
-	<div class="modal-backdrop" onclick={onclose} role="presentation"></div>
-	<div class="modal-card animate-in detail-modal">
+<Modal title="Player details" titleId="pdm-title" maxWidth="700px" onclose={onclose}>
+	<div class="detail-modal">
 		<!-- Sticky header -->
-		<div class="detail-header">
-			<div class="flex items-center gap-2 min-w-0">
-				<div class="min-w-0">
-					<h3 class="m-0 text-xl truncate">{playerId}</h3>
+		<div class="modal-header">
+			<div class="flex min-w-0 flex-wrap items-center gap-2">
+				<div class="min-w-0 flex-1">
+					<h2 id="pdm-title" class="m-0 truncate text-xl">{playerId}</h2>
 					{#if player?.uin}
-						<span class="block font-mono text-xs text-text-muted">UIN {player.uin}</span>
+						<span class="text-text-muted block font-mono text-xs">UIN {player.uin}</span>
 					{/if}
 				</div>
-				<span class="w-2 h-2 rounded-full shrink-0 {online ? 'bg-success shadow-[0_0_6px_var(--color-success)]' : 'bg-border'}"></span>
-				<span class="text-xs text-text-muted whitespace-nowrap">{online ? 'Online' : 'Offline'}</span>
+				<div class="flex items-center gap-2">
+					<span
+						class="status-dot {online
+							? 'status-dot-online'
+							: 'status-dot-offline'}"
+						role="img"
+						aria-label={online ? 'Online' : 'Offline'}
+					></span>
+					<span class="text-text-muted text-xs whitespace-nowrap"
+						>{online ? 'Online' : 'Offline'}</span
+					>
+				</div>
 			</div>
-			<div class="flex items-center gap-3 shrink-0">
+			<div class="flex shrink-0 items-center gap-3">
 				{#if player}
-					<span class="font-mono text-2xl font-bold" class:text-success={player.money > 0} class:text-danger={player.money < 0}>
-						${player.money.toLocaleString()}
+					<span
+						class="font-mono text-2xl font-bold"
+						class:text-success={player.money > 0}
+						class:text-danger={player.money < 0}
+					>
+						{player.money > 0 ? '+' : ''}${player.money.toLocaleString()}
 					</span>
 				{/if}
-				<button class="w-8 h-8 flex items-center justify-center border-none bg-transparent text-text-muted rounded-sm cursor-pointer transition-all duration-100 ease-brand hover:bg-cream-dark hover:text-text-primary" onclick={onclose} aria-label="Close">
-					<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+				<button class="btn-close" onclick={onclose} aria-label="Close player details" bind:this={closeBtn}>
+					<Icon name="close" size={18} />
 				</button>
 			</div>
 		</div>
 
 		<!-- Scrollable body -->
-		<div class="detail-body">
+		<div class="modal-body">
 			<!-- Actions -->
 			{#if player}
-				<div class="flex items-center gap-2 flex-wrap mb-5">
+				<div class="mb-5 flex flex-wrap items-center gap-3">
 					{#if isRunningOrCompleted}
-						<button class="btn btn-sm bg-gold-faint text-gold border-transparent font-bold font-mono hover:bg-gold hover:text-text-inverse" onclick={() => rewardPlayer(100)}>+$100</button>
-						<button class="btn btn-sm bg-gold-faint text-gold border-transparent font-bold font-mono hover:bg-gold hover:text-text-inverse" onclick={() => rewardPlayer(500)}>+$500</button>
-						<button class="btn btn-sm bg-danger-bg text-danger border-transparent font-bold font-mono hover:bg-danger hover:text-text-inverse" onclick={() => rewardPlayer(-100)}>-$100</button>
 						<div class="flex gap-0.5">
 							<input
 								type="number"
-								class="w-[70px] py-1 px-2 font-mono text-xs border-[1.5px] border-border rounded-l-sm rounded-r-none bg-white text-text-primary focus:outline-none focus:border-maroon"
+								class="border-border text-text-primary focus:border-maroon w-20 rounded-l-sm rounded-r-none border bg-surface px-2 py-1 font-mono text-xs focus:outline-none"
 								placeholder="$"
 								bind:value={customReward}
-								aria-label="Custom reward"
+								aria-label="Reward amount in dollars"
+								min={-99999}
+								max={99999}
 							/>
-							<button class="btn btn-sm btn-primary rounded-l-none rounded-r-sm py-1 px-2" onclick={rewardCustom}>Send</button>
+							<button
+								class="btn btn-sm btn-primary rounded-l-none rounded-r-sm px-2 py-1"
+								onclick={rewardCustom}>Send</button
+							>
+						</div>
+						<div class="border-border-light flex gap-1 border-l pl-3">
+							<button
+								class="text-text-muted hover:text-gold hover:bg-gold-faint min-h-11 min-w-11 cursor-pointer rounded-sm px-2 py-1 font-mono text-xs font-bold transition-colors"
+								onclick={() => rewardPlayer(100)}>+100</button
+							>
+							<button
+								class="text-text-muted hover:text-gold hover:bg-gold-faint min-h-11 min-w-11 cursor-pointer rounded-sm px-2 py-1 font-mono text-xs font-bold transition-colors"
+								onclick={() => rewardPlayer(500)}>+500</button
+							>
+							<button
+								class="text-text-muted hover:text-danger hover:bg-danger-bg min-h-11 min-w-11 cursor-pointer rounded-sm px-2 py-1 font-mono text-xs font-bold transition-colors"
+								onclick={() => rewardPlayer(-100)}>−100</button
+							>
 						</div>
 					{/if}
-					{#if isFormingOrFull}
-						<button class="btn btn-sm btn-danger" onclick={() => { showKickConfirm = true; }}>Kick</button>
+					{#if isForming}
+						<button
+							class="btn btn-sm btn-danger"
+							onclick={() => {
+								showKickConfirm = true;
+							}}>Kick</button
+						>
 					{/if}
 				</div>
 			{/if}
@@ -110,15 +146,18 @@
 			<!-- Generators -->
 			{#if playerGens.length > 0}
 				<div class="mb-5">
-					<h4 class="text-sm font-semibold uppercase tracking-brand text-text-muted mb-3">Generators</h4>
-					<div class="table-wrap border border-border-light rounded">
+					<h3 class="tracking-brand text-text-muted mb-3 text-sm font-semibold uppercase">
+						Generators
+					</h3>
+					<div class="table-wrap border-border-light rounded border">
 						<table>
+							<caption class="sr-only">Generators owned by {playerId}</caption>
 							<thead>
 								<tr>
-									<th>ID</th>
-									<th>Capacity</th>
-									<th>Cost</th>
-									<th>Offer</th>
+									<th scope="col">ID</th>
+									<th scope="col">Capacity</th>
+									<th scope="col">Cost</th>
+									<th scope="col">Offer</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -139,29 +178,36 @@
 			<!-- Period History -->
 			{#if periodData.length > 0}
 				<div class="mb-5">
-					<h4 class="text-sm font-semibold uppercase tracking-brand text-text-muted mb-3">Period History</h4>
-					<div class="table-wrap border border-border-light rounded max-h-[300px] overflow-y-auto">
+					<h3 class="tracking-brand text-text-muted mb-3 text-sm font-semibold uppercase">
+						Period History
+					</h3>
+					<div class="table-wrap border-border-light max-h-[min(300px,40vh)] overflow-y-auto rounded border">
 						<table>
+							<caption class="sr-only">Period performance history for {playerId}</caption>
 							<thead>
 								<tr>
-									<th>#</th>
-									<th>Load</th>
-									<th>Marginal</th>
-									<th>Revenue</th>
-									<th>Costs</th>
-									<th>Profit</th>
-									<th>Money</th>
+									<th scope="col">#</th>
+									<th scope="col" class="detail-col">Load</th>
+									<th scope="col">Marginal</th>
+									<th scope="col" class="detail-col">Revenue</th>
+									<th scope="col" class="detail-col">Costs</th>
+									<th scope="col">Profit</th>
+									<th scope="col">Money</th>
 								</tr>
 							</thead>
 							<tbody>
 								{#each periodData as pd}
 									<tr>
 										<td>{pd.number}</td>
-										<td>{pd.load}</td>
+										<td class="detail-col">{pd.load}</td>
 										<td>{pd.marginal != null ? `$${pd.marginal.toLocaleString()}` : '—'}</td>
-										<td>{pd.revenue != null ? `$${pd.revenue.toLocaleString()}` : '—'}</td>
-										<td>{pd.costs != null ? `$${pd.costs.toLocaleString()}` : '—'}</td>
-										<td class:text-success={(pd.profit ?? 0) > 0} class:text-danger={(pd.profit ?? 0) < 0}>{pd.profit != null ? `$${pd.profit.toLocaleString()}` : '—'}</td>
+										<td class="detail-col">{pd.revenue != null ? `$${pd.revenue.toLocaleString()}` : '—'}</td>
+										<td class="detail-col">{pd.costs != null ? `$${pd.costs.toLocaleString()}` : '—'}</td>
+										<td
+											class:text-success={(pd.profit ?? 0) > 0}
+											class:text-danger={(pd.profit ?? 0) < 0}
+											>{pd.profit != null ? `${pd.profit > 0 ? '+' : ''}$${pd.profit.toLocaleString()}` : '—'}</td
+										>
 										<td>{pd.money != null ? `$${pd.money.toLocaleString()}` : '—'}</td>
 									</tr>
 								{/each}
@@ -172,7 +218,20 @@
 			{/if}
 		</div>
 	</div>
-</div>
+</Modal>
+
+{#if showKickConfirm}
+	<ConfirmModal
+		title="Kick Player"
+		message="Remove {playerId} from the game? They will be disconnected and their generators reassigned."
+		confirmLabel="Kick Player"
+		variant="danger"
+		onconfirm={kickPlayer}
+		oncancel={() => {
+			showKickConfirm = false;
+		}}
+	/>
+{/if}
 
 <style>
 	.detail-modal {
@@ -182,30 +241,11 @@
 		flex-direction: column;
 		overflow: hidden;
 	}
-	.detail-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 1.25rem 1.5rem;
-		border-bottom: 2px solid var(--color-border-light);
-		flex-shrink: 0;
-	}
-	.detail-body {
-		flex: 1;
-		min-height: 0;
-		overflow-y: auto;
-		padding: 1.5rem;
+
+	/* Hide secondary columns (Load, Revenue, Costs) on narrow screens */
+	@media (max-width: 520px) {
+		.detail-col {
+			display: none;
+		}
 	}
 </style>
-
-{#if showKickConfirm}
-	<ConfirmModal
-		title="Kick Player"
-		message="Remove {playerId} from the game?"
-		confirmLabel="Kick"
-		variant="danger"
-		onconfirm={kickPlayer}
-		oncancel={() => { showKickConfirm = false; }}
-	/>
-{/if}

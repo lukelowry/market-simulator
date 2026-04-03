@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { focusTrap } from '$lib/utils/focusTrap.js';
+	import Modal from '$lib/components/shared/Modal.svelte';
 
 	let {
 		title,
@@ -18,39 +17,35 @@
 		oncancel: () => void;
 	} = $props();
 
-	let overlayEl: HTMLDivElement;
-
-	onMount(() => {
-		overlayEl?.focus();
-	});
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') oncancel();
-	}
+	const titleId = `confirm-title-${crypto.randomUUID().slice(0, 8)}`;
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<!-- svelte-ignore a11y_interactive_supports_focus -->
-<div class="modal-overlay" role="dialog" aria-modal="true" aria-label={title} onkeydown={handleKeydown} tabindex="-1" bind:this={overlayEl} use:focusTrap>
-	<div class="modal-backdrop" onclick={oncancel} role="presentation"></div>
-	<div class="modal-card animate-in confirm-modal">
+<Modal {title} {titleId} maxWidth="400px" depth={1} onclose={oncancel}>
+	<div class="confirm-modal">
 		<div class="confirm-body">
-			<div class="w-10 h-[3px] rounded-sm mb-4 {variant === 'danger' ? 'bg-danger' : 'bg-warning'}" aria-hidden="true"></div>
-			<h3 class="mb-2 text-lg">{title}</h3>
-			<p class="text-sm text-text-secondary mb-6 leading-normal">{message}</p>
+			<div
+				class="mb-3 h-[2px] w-8 rounded-sm {variant === 'danger' ? 'bg-danger' : 'bg-warning'}"
+				aria-hidden="true"
+			></div>
+			<h3 id={titleId} class="mb-1.5 text-base">{title}</h3>
+			<p class="text-text-secondary mb-5 text-sm leading-normal">{message}</p>
 		</div>
 		<div class="confirm-footer">
 			<button class="btn btn-secondary btn-sm" onclick={oncancel}>Cancel</button>
-			<button class="btn btn-sm" class:btn-danger={variant === 'danger'} class:btn-warning={variant === 'warning'} onclick={onconfirm}>
+			<button
+				class="btn btn-sm"
+				class:btn-danger={variant === 'danger'}
+				class:btn-warning={variant === 'warning'}
+				onclick={onconfirm}
+			>
 				{confirmLabel}
 			</button>
 		</div>
 	</div>
-</div>
+</Modal>
 
 <style>
 	.confirm-modal {
-		max-width: 400px;
 		width: 100%;
 		max-height: 90vh;
 		display: flex;
@@ -61,13 +56,13 @@
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
-		padding: 1.5rem;
+		padding: 1.25rem;
 	}
 	.confirm-footer {
 		display: flex;
 		gap: 0.75rem;
 		justify-content: flex-end;
-		padding: 0 1.5rem 1.5rem;
+		padding: 0 1.25rem 1.25rem;
 		flex-shrink: 0;
 	}
 </style>

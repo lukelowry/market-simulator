@@ -1,0 +1,20 @@
+{
+	"VsCodeTaskButtons.showCounter": false,
+	"VsCodeTaskButtons.tasks": [
+		{
+			"label": "$(play) Dev",
+			"task": "Dev Server",
+			"tooltip": "Start local dev server with HMR"
+		},
+		{
+			"label": "$(cloud-upload) Preview",
+			"task": "Deploy Preview",
+			"tooltip": "Build and deploy to Cloudflare preview (NOT production)"
+		},
+		{
+			"label": "$(beaker) Tests",
+			"task": "Run Tests",
+			"tooltip": "Run Playwright e2e tests"
+		}
+	]
+}

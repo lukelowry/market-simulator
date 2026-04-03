@@ -1,0 +1,5 @@
+build/
+.svelte-kit/
+dist-worker/
+node_modules/
+.wrangler/

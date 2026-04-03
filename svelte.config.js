@@ -5,7 +5,8 @@ const config = {
 	kit: {
 		adapter: adapter(),
 		alias: {
-			$worker: 'worker'
+			$worker: 'worker',
+			$shared: 'shared'
 		},
 		experimental: {
 			remoteFunctions: true

@@ -1,7 +1,7 @@
 /**
  * @module countdown
  * Svelte 5 rune-based countdown timer factory for the auto-advance clock.
- * Uses `setInterval` polling (every 200ms) since this runs in a `.svelte.ts` module.
+ * Uses `setInterval` polling (every 500ms) since this runs in a `.svelte.ts` module.
  *
  * Uses a snapshot-based local countdown to avoid clock skew between server and client.
  * Server sends absolute `advance_time` (epoch ms from its own clock). Instead of comparing
@@ -52,7 +52,7 @@ export function createCountdown() {
 		// Reset so the first tick() takes a fresh snapshot
 		trackedAdvanceTime = 0;
 		tick();
-		intervalId = setInterval(tick, 200);
+		intervalId = setInterval(tick, 500);
 	}
 
 	function stop() {

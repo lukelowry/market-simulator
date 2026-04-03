@@ -1,48 +1,26 @@
-/**
- * @module MarketRegistry
- * Singleton Durable Object (instantiated as `'global'`) that maintains the market listing.
- * Stores each market's summary metadata for the lobby browser.
- * Not authoritative for game state — MarketRoom pushes updates here via `updateRegistry()`.
- *
- * Storage schema: one key per market as `market:{name}`. Legacy single-blob `'markets'` key
- * is auto-migrated on first load after deployment.
- */
-
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
-import type { MarketInfo } from './types';
+import type { MarketListItem, GameState } from '$shared/game.js';
 
+export type RegistryEntry = Omit<MarketListItem, 'isMember'> & { playerUins: string[] };
+
+/** Singleton DO that maintains the market listing for the lobby browser. */
 export class MarketRegistry extends DurableObject<Env> {
-	private markets: Record<string, MarketInfo> = {};
+	private markets: Record<string, RegistryEntry> = {};
 
 	constructor(ctx: DurableObjectState, env: Env) {
 		super(ctx, env);
 		this.ctx.blockConcurrencyWhile(async () => {
-			// Load current per-key entries
-			const entries = await this.ctx.storage.list<MarketInfo>({ prefix: 'market:' });
+			const entries = await this.ctx.storage.list<RegistryEntry>({ prefix: 'market:' });
+			const stale: string[] = [];
 			for (const [key, info] of entries) {
-				const name = key.slice('market:'.length);
-				info.visibility = info.visibility || 'public';
-				this.markets[name] = info;
-			}
-
-			// Migrate from legacy single-blob storage
-			if (entries.size === 0) {
-				const legacy = await this.ctx.storage.get<Record<string, MarketInfo>>('markets');
-				if (legacy) {
-					const batch: Record<string, MarketInfo> = {};
-					for (const name of Object.keys(legacy)) {
-						const info = legacy[name];
-						info.visibility = info.visibility || 'public';
-								this.markets[name] = info;
-						batch[`market:${name}`] = info;
-					}
-					if (Object.keys(batch).length > 0) {
-						await this.ctx.storage.put(batch);
-					}
-					await this.ctx.storage.delete('markets');
+				if (!info.playerUins) {
+					stale.push(key);
+				} else {
+					this.markets[key.slice('market:'.length)] = info;
 				}
 			}
+			if (stale.length > 0) await this.ctx.storage.delete(stale);
 		});
 	}
 
@@ -50,16 +28,18 @@ export class MarketRegistry extends DurableObject<Env> {
 		const url = new URL(request.url);
 
 		if (url.pathname === '/list' && request.method === 'GET') {
-			const showAll = url.searchParams.get('admin') === 'true';
+			const uin = url.searchParams.get('uin');
+			const toListItem = ({ playerUins, ...rest }: RegistryEntry): MarketListItem => ({
+				...rest,
+				...(uin ? { isMember: playerUins.includes(uin) } : {})
+			});
 			const all = Object.values(this.markets);
-			if (showAll) {
-				return Response.json(all);
-			}
-			return Response.json(all.filter(m => m.visibility === 'public'));
+			if (url.searchParams.get('admin') === 'true') return Response.json(all.map(toListItem));
+			return Response.json(all.filter((m) => m.visibility === 'public').map(toListItem));
 		}
 
 		if (url.pathname === '/update' && request.method === 'POST') {
-			const info: MarketInfo = await request.json();
+			const info: RegistryEntry = await request.json();
 			this.markets[info.name] = info;
 			await this.ctx.storage.put(`market:${info.name}`, info);
 			return new Response('OK');
@@ -72,16 +52,81 @@ export class MarketRegistry extends DurableObject<Env> {
 			return new Response('OK');
 		}
 
-		// Purge only removes from registry; does NOT delete MarketRoom DO storage.
-		// Call /api/markets/destroy on each room separately for full cleanup.
 		if (url.pathname === '/purge' && request.method === 'POST') {
 			const names = Object.keys(this.markets);
 			this.markets = {};
-			const keys = names.map(n => `market:${n}`);
+			const keys = names.map((n) => `market:${n}`);
 			if (keys.length > 0) await this.ctx.storage.delete(keys);
 			return Response.json({ removed: names });
 		}
 
 		return new Response('Not found', { status: 404 });
+	}
+}
+
+/** Push current game state to the global MarketRegistry DO. Retries once on failure. */
+export async function pushToRegistry(
+	registryNS: DurableObjectNamespace,
+	marketName: string,
+	game: GameState
+): Promise<boolean> {
+	if (!marketName) return false;
+
+	const doUpdate = async () => {
+		const registry = registryNS.get(registryNS.idFromName('global'));
+		if (game.state === 'uninitialized') {
+			await removeFromRegistry(registryNS, marketName);
+		} else {
+			await registry.fetch(
+				new Request('https://registry/update', {
+					method: 'POST',
+					body: JSON.stringify({
+						name: marketName,
+						state: game.state,
+						visibility: game.visibility,
+						playerCount: Object.keys(game.players).length,
+						maxPlayers: game.options?.max_participants ?? 0,
+						updatedAt: Date.now(),
+						playerUins: Object.values(game.players).map(p => p.uin)
+					})
+				})
+			);
+		}
+	};
+
+	try {
+		await doUpdate();
+		return true;
+	} catch (err) {
+		console.warn('Registry update failed, retrying:', err);
+	}
+
+	// Single retry after brief delay — covers DO cold-start and transient network errors
+	try {
+		await new Promise(r => setTimeout(r, 200));
+		await doUpdate();
+		return true;
+	} catch (err) {
+		console.error('Registry update failed after retry:', err);
+		return false;
+	}
+}
+
+/** Remove a market from the global MarketRegistry DO. */
+export async function removeFromRegistry(
+	registryNS: DurableObjectNamespace,
+	marketName: string
+): Promise<void> {
+	if (!marketName) return;
+	try {
+		const registry = registryNS.get(registryNS.idFromName('global'));
+		await registry.fetch(
+			new Request('https://registry/remove', {
+				method: 'POST',
+				body: JSON.stringify({ name: marketName })
+			})
+		);
+	} catch (err) {
+		console.error('Registry remove failed:', err);
 	}
 }

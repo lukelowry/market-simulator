@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { focusTrap } from '$lib/utils/focusTrap.js';
-	import type { GameOptions, PaymentMethod } from '$lib/types/game.js';
+	import Modal from '$lib/components/shared/Modal.svelte';
+	import Icon from '$lib/components/shared/Icon.svelte';
+	import type { GameOptions, PaymentMethod } from '$shared/game.js';
 
 	let {
 		onclose,
@@ -19,9 +20,30 @@
 	let selectedPreset = $state<'quick' | 'standard' | 'extended' | null>('standard');
 
 	const presets = {
-		quick: { maxParticipants: '4', numPeriods: '12', autoAdvanceTime: '60', paymentMethod: 'last_accepted_offer' as PaymentMethod, label: 'Quick', desc: '4 players, 12 periods, 60s' },
-		standard: { maxParticipants: '6', numPeriods: '24', autoAdvanceTime: '180', paymentMethod: 'last_accepted_offer' as PaymentMethod, label: 'Standard', desc: '6 players, 24 periods, 3m' },
-		extended: { maxParticipants: '10', numPeriods: '48', autoAdvanceTime: '120', paymentMethod: 'last_accepted_offer' as PaymentMethod, label: 'Extended', desc: '10 players, 48 periods, 2m' }
+		quick: {
+			maxParticipants: '4',
+			numPeriods: '12',
+			autoAdvanceTime: '60',
+			paymentMethod: 'last_accepted_offer' as PaymentMethod,
+			label: 'Quick',
+			desc: '4 players, 12 periods, 60s'
+		},
+		standard: {
+			maxParticipants: '6',
+			numPeriods: '24',
+			autoAdvanceTime: '180',
+			paymentMethod: 'last_accepted_offer' as PaymentMethod,
+			label: 'Standard',
+			desc: '6 players, 24 periods, 3m'
+		},
+		extended: {
+			maxParticipants: '10',
+			numPeriods: '48',
+			autoAdvanceTime: '120',
+			paymentMethod: 'last_accepted_offer' as PaymentMethod,
+			label: 'Extended',
+			desc: '10 players, 48 periods, 2m'
+		}
 	};
 
 	function applyPreset(key: 'quick' | 'standard' | 'extended') {
@@ -47,7 +69,8 @@
 		return m > 0 ? `${h}h ${m}m` : `${h}h`;
 	});
 
-	const canSubmit = $derived(name.trim().length > 0);
+	let submitting = $state(false);
+	const canSubmit = $derived(name.trim().length > 0 && !submitting);
 
 	function buildConfig(): GameOptions {
 		return {
@@ -66,12 +89,15 @@
 
 	function handleSubmit() {
 		if (!canSubmit) return;
-		oncreate(name.trim(), buildConfig());
+		submitting = true;
+		try {
+			oncreate(name.trim(), buildConfig());
+		} catch {
+			submitting = false;
+		}
 	}
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') onclose();
-	}
+	const titleId = `gcm-title-${crypto.randomUUID().slice(0, 8)}`;
 
 	let nameInput: HTMLInputElement | undefined;
 	onMount(() => {
@@ -79,19 +105,13 @@
 	});
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<!-- svelte-ignore a11y_interactive_supports_focus -->
-<div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Create New Market" onkeydown={handleKeydown} tabindex="-1" use:focusTrap>
-	<div class="modal-backdrop" onclick={onclose} role="presentation"></div>
-	<div class="modal-card animate-in create-modal">
+<Modal title="Create New Market" {titleId} maxWidth="600px" onclose={onclose}>
+	<div class="create-modal">
 		<!-- Sticky header -->
 		<div class="create-header">
-			<div>
-				<div class="w-10 h-[3px] bg-gradient-to-r from-maroon to-gold rounded-sm mb-3" aria-hidden="true"></div>
-				<h3 class="m-0 text-xl">Create New Market</h3>
-			</div>
-			<button class="w-8 h-8 flex items-center justify-center border-none bg-transparent text-text-muted rounded-sm cursor-pointer transition-all duration-100 ease-brand shrink-0 hover:bg-cream-dark hover:text-text-primary" onclick={onclose} aria-label="Close">
-				<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+			<h3 id={titleId} class="m-0 text-xl">Create New Market</h3>
+			<button class="btn-close" onclick={onclose} aria-label="Close">
+				<Icon name="close" size={18} />
 			</button>
 		</div>
 
@@ -102,87 +122,151 @@
 				<input
 					bind:this={nameInput}
 					type="text"
-					class="form-input text-lg p-4"
+					class="form-input"
 					id="market-name"
 					placeholder="e.g. Spring 2026 Session"
 					bind:value={name}
 					autocomplete="off"
+					maxlength={40}
 				/>
 			</div>
 
-			<div class="flex items-center gap-4 mb-5 before:content-[''] before:flex-1 before:h-px before:bg-border-light after:content-[''] after:flex-1 after:h-px after:bg-border-light">
-				<span class="text-xs font-semibold uppercase tracking-section text-text-muted whitespace-nowrap">Preset</span>
+			<div
+				class="before:bg-border-light after:bg-border-light mb-5 flex items-center gap-4 before:h-px before:flex-1 before:content-[''] after:h-px after:flex-1 after:content-['']"
+			>
+				<span
+					class="tracking-section text-text-muted text-xs font-semibold whitespace-nowrap uppercase"
+					>Preset</span
+				>
 			</div>
 
-			<div class="grid grid-cols-1 min-[441px]:grid-cols-3 gap-3 mb-6">
-				{#each (['quick', 'standard', 'extended'] as const) as key}
+			<div class="mb-6 grid grid-cols-1 gap-3 min-[480px]:grid-cols-3">
+				{#each ['quick', 'standard', 'extended'] as const as key}
 					{@const p = presets[key]}
 					<button
-						class="flex flex-col gap-0.5 py-3 px-4 border-[1.5px] rounded cursor-pointer transition-all duration-100 ease-brand text-left font-body {selectedPreset === key ? 'border-maroon bg-maroon-faint shadow-[inset_3px_0_0_var(--color-maroon)]' : 'bg-white border-border-light hover:border-border hover:shadow-xs'}"
+						class="ease-brand font-body flex cursor-pointer flex-col gap-0.5 rounded border px-3 py-2.5 text-left transition-all duration-100 {selectedPreset ===
+						key
+							? 'border-maroon/40 bg-maroon-faint shadow-[inset_2px_0_0_var(--color-maroon)]'
+							: 'border-border-light hover:border-border bg-surface hover:shadow-xs'}"
 						onclick={() => applyPreset(key)}
 					>
-						<span class="font-bold text-sm {selectedPreset === key ? 'text-maroon' : 'text-text-primary'}">{p.label}</span>
-						<span class="text-[11px] text-text-muted font-mono">{p.desc}</span>
+						<span
+							class="text-sm font-bold {selectedPreset === key
+								? 'text-maroon'
+								: 'text-text-primary'}">{p.label}</span
+						>
+						<span class="text-text-muted font-mono text-[11px]">{p.desc}</span>
 					</button>
 				{/each}
 			</div>
 
-			<div class="grid grid-cols-1 min-[441px]:grid-cols-3 gap-x-5 gap-y-0 mb-4">
+			<div class="mb-4 grid grid-cols-1 gap-x-5 gap-y-0 min-[480px]:grid-cols-3">
 				<div class="form-group mb-5">
 					<label for="cfg-max" class="form-label">Max Players</label>
-					<input type="number" class="form-input" id="cfg-max" min="2" max="99" bind:value={maxParticipants} oninput={onFieldChange} />
+					<input
+						type="number"
+						class="form-input"
+						id="cfg-max"
+						min="2"
+						max="99"
+						bind:value={maxParticipants}
+						oninput={onFieldChange}
+					/>
 				</div>
 				<div class="form-group mb-5">
 					<label for="cfg-periods" class="form-label">Periods</label>
-					<input type="number" class="form-input" id="cfg-periods" min="2" max="99" bind:value={numPeriods} oninput={onFieldChange} />
+					<input
+						type="number"
+						class="form-input"
+						id="cfg-periods"
+						min="2"
+						max="99"
+						bind:value={numPeriods}
+						oninput={onFieldChange}
+					/>
 				</div>
 				<div class="form-group mb-5">
 					<label for="cfg-timer" class="form-label">Timer (sec)</label>
-					<input type="number" class="form-input" id="cfg-timer" min="2" max="9999" bind:value={autoAdvanceTime} oninput={onFieldChange} />
+					<input
+						type="number"
+						class="form-input"
+						id="cfg-timer"
+						min="2"
+						max="9999"
+						bind:value={autoAdvanceTime}
+						oninput={onFieldChange}
+					/>
 				</div>
 			</div>
 
 			<div class="mb-6">
 				<span class="form-label" id="gcm-payment-label">Payment Method</span>
-				<div class="flex border-[1.5px] border-border rounded overflow-hidden" role="group" aria-labelledby="gcm-payment-label">
+				<div
+					class="border-border flex overflow-hidden rounded border"
+					role="group"
+					aria-labelledby="gcm-payment-label"
+					aria-describedby="gcm-payment-desc"
+				>
 					<button
-						class="flex-1 py-2 px-3 font-body text-sm font-semibold border-none border-r-[1.5px] border-r-border cursor-pointer transition-all duration-100 ease-brand {paymentMethod === 'last_accepted_offer' ? 'bg-maroon text-text-inverse' : 'bg-white text-text-secondary hover:bg-maroon-faint hover:text-maroon'}"
-						onclick={() => { paymentMethod = 'last_accepted_offer'; onFieldChange(); }}
+						class="font-body border-r-border ease-brand flex-1 cursor-pointer border-r-accent border-none px-3 py-2 text-sm font-semibold transition-all duration-100 {paymentMethod ===
+						'last_accepted_offer'
+							? 'bg-maroon text-text-inverse'
+							: 'text-text-secondary hover:bg-maroon-faint hover:text-maroon bg-surface'}"
+						onclick={() => {
+							paymentMethod = 'last_accepted_offer';
+							onFieldChange();
+						}}
 						type="button"
-						aria-pressed={paymentMethod === 'last_accepted_offer'}
-					>LAO</button>
+						aria-pressed={paymentMethod === 'last_accepted_offer'}>LAO</button
+					>
 					<button
-						class="flex-1 py-2 px-3 font-body text-sm font-semibold border-none cursor-pointer transition-all duration-100 ease-brand {paymentMethod === 'pay_as_offered' ? 'bg-maroon text-text-inverse' : 'bg-white text-text-secondary hover:bg-maroon-faint hover:text-maroon'}"
-						onclick={() => { paymentMethod = 'pay_as_offered'; onFieldChange(); }}
+						class="font-body ease-brand flex-1 cursor-pointer border-none px-3 py-2 text-sm font-semibold transition-all duration-100 {paymentMethod ===
+						'pay_as_offered'
+							? 'bg-maroon text-text-inverse'
+							: 'text-text-secondary hover:bg-maroon-faint hover:text-maroon bg-surface'}"
+						onclick={() => {
+							paymentMethod = 'pay_as_offered';
+							onFieldChange();
+						}}
 						type="button"
-						aria-pressed={paymentMethod === 'pay_as_offered'}
-					>PAO</button>
+						aria-pressed={paymentMethod === 'pay_as_offered'}>PAO</button
+					>
 				</div>
-				<span class="block text-xs text-text-muted mt-2 leading-[1.4]">
+				<span id="gcm-payment-desc" class="text-text-muted mt-2 block text-xs leading-[1.4]">
 					{paymentMethod === 'last_accepted_offer'
-						? 'LAO (uniform pricing): All dispatched generators paid the clearing price.'
-						: 'PAO (discriminatory pricing): Each generator paid its own offer.'}
+						? 'Last Accepted Offer: All dispatched generators are paid the same clearing price.'
+						: 'Pay As Offered: Each dispatched generator is paid its own offer price.'}
 				</span>
 			</div>
 
-			<p class="text-xs text-text-muted mb-5">All other settings (generator portfolio, demand profile, offer cap, etc.) can be tuned in Market Settings after creation.</p>
+			<p class="text-text-muted mb-5 text-xs">
+				Other settings can be adjusted in Market Settings after creation.
+			</p>
 		</div>
 
 		<!-- Sticky footer -->
 		<div class="create-footer">
-			<div class="flex flex-row min-[441px]:flex-col items-baseline min-[441px]:items-start gap-2 min-[441px]:gap-[1px]">
-				<span class="text-[11px] font-semibold uppercase tracking-brand text-text-muted">Est. Duration</span>
-				<span class="font-display text-lg font-bold text-maroon">{estimatedDuration}</span>
+			<div
+				class="flex flex-row items-baseline gap-2 min-[480px]:flex-col min-[480px]:items-start min-[480px]:gap-px"
+			>
+				<span class="tracking-brand text-text-muted text-[11px] font-semibold uppercase"
+					>Est. Duration</span
+				>
+				<span class="font-display text-maroon text-lg font-bold">{estimatedDuration}</span>
 			</div>
-			<div class="flex gap-3 items-center justify-end">
+			<div class="flex items-center justify-end gap-3">
 				<button class="btn btn-secondary btn-sm" onclick={onclose}>Cancel</button>
-				<button class="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed" onclick={handleSubmit} disabled={!canSubmit}>
+				<button
+					class="btn btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+					onclick={handleSubmit}
+					disabled={!canSubmit}
+				>
 					Create Market
 				</button>
 			</div>
 		</div>
 	</div>
-</div>
+</Modal>
 
 <style>
 	.create-modal {
@@ -197,12 +281,14 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: 1rem;
-		padding: 1.25rem 1.25rem 1rem;
+		padding: 1rem 1.25rem;
 		border-bottom: 1px solid var(--color-border-light);
 		flex-shrink: 0;
 	}
-	@media (min-width: 441px) {
-		.create-header { padding: 2rem 2rem 1.25rem; }
+	@media (min-width: 480px) {
+		.create-header {
+			padding: 1.25rem 1.5rem;
+		}
 	}
 	.create-body {
 		flex: 1;
@@ -210,24 +296,26 @@
 		overflow-y: auto;
 		padding: 1.25rem;
 	}
-	@media (min-width: 441px) {
-		.create-body { padding: 1.5rem 2rem; }
+	@media (min-width: 480px) {
+		.create-body {
+			padding: 1.25rem 1.5rem;
+		}
 	}
 	.create-footer {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: 0.75rem;
 		align-items: stretch;
-		padding: 1.25rem;
+		padding: 1rem 1.25rem;
 		border-top: 1px solid var(--color-border-light);
 		flex-shrink: 0;
 	}
-	@media (min-width: 441px) {
+	@media (min-width: 480px) {
 		.create-footer {
 			flex-direction: row;
 			align-items: center;
 			justify-content: space-between;
-			padding: 1.25rem 2rem;
+			padding: 1rem 1.5rem;
 		}
 	}
 </style>
